@@ -1,8 +1,9 @@
 """
 Real test harness for verifying ijk-compiled .k content against the
-actual oK interpreter (~/code/ok/repl.js) -- not a mock, not a
-simulation of K semantics. Every check here runs real K source
-through the real interpreter and inspects its real output.
+actual oK interpreter (repl.js from JohnEarnest/ok, found via the
+OK_REPL environment variable, default ~/code/ok/repl.js) -- not a
+mock, not a simulation of K semantics. Every check here runs real K
+source through the real interpreter and inspects its real output.
 
 Confirmed by direct testing, 2026-09-14, not assumed:
 - oK's REPL always exits 0, even on a genuine error ("valence error.",
@@ -14,6 +15,7 @@ Confirmed by direct testing, 2026-09-14, not assumed:
   at the end of a test file is a legitimate, evaluable success marker.
 """
 
+import os
 import re
 import subprocess
 from dataclasses import dataclass
@@ -21,7 +23,9 @@ from pathlib import Path
 
 _HERE = Path(__file__).parent
 _PRELUDE = _HERE / "prelude.k"
-_REPL = Path.home() / "code" / "ok" / "repl.js"
+_REPL = Path(
+    os.environ.get("OK_REPL", Path.home() / "code" / "ok" / "repl.js")
+).expanduser()
 
 # K error messages observed directly: "valence error.", "the name 'x'
 # has not been defined.", "type error." (per oK's docs/Manual.md
@@ -50,7 +54,8 @@ def run_k(source: str, use_prelude: bool = True) -> OkResult:
     """
     if not _REPL.exists():
         raise FileNotFoundError(
-            f"oK REPL not found at {_REPL} -- clone JohnEarnest/ok first."
+            f"oK REPL not found at {_REPL} -- clone JohnEarnest/ok and set "
+            "OK_REPL to its repl.js if it isn't at ~/code/ok/repl.js."
         )
 
     full_source = source
