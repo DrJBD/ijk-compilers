@@ -37,7 +37,9 @@ It writes nothing unless given `--out`, and never renames or edits a
 source file.
 
 `ijk_files.py` makes and takes apart `.ij` (a `.i` and `.j` merged)
-and `.ijk` (all three in one file). See `samples/README.md` for what
+and `.ijk` (all three in one file), and `check` tests a `.ijk` as a
+Rosetta stone: does the `k` say exactly what the `j` says, and where
+does the `j` differ from the `i`. See `samples/README.md` for what
 each file type is, with
 sample `.k` output that runs on its own in oK.
 
@@ -46,7 +48,9 @@ sample `.k` output that runs on its own in oK.
 `feed.py` turns any mix of `.i`, `.j`, `.k` and `.ijk` files into one
 self-contained K program. It defines `docs` (each document's `.k`
 dict) and `corpus` (the same documents as columns: `name`, `title`,
-`body`, `text`).
+`body`, `text`). The `.i` side never goes in: `.i` and `.ij` files are
+refused, a `.ijk` contributes only its `k` or `j`, and a folder's `.i`
+files are skipped.
 
 ```sh
 python3 feed.py samples/ -o feed.k        # then: node ~/code/ok/repl.js feed.k

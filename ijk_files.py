@@ -15,6 +15,14 @@ Usage:
     python3 ijk_files.py split  NAME.ij        [-d DIR]
     python3 ijk_files.py pack   NAME.i [NAME.j [NAME.k]] [-o NAME.ijk]
     python3 ijk_files.py unpack NAME.ijk       [-d DIR]
+    python3 ijk_files.py check  NAME.ijk       [--show]
+
+check reads a .ijk as Judah defines it: "rosetta stones with the same
+thing said three different ways ... a definition that can easily be
+shown to be true or false given a review by a human." The k-to-j half
+is mechanical: the k section, run in oK, must hold exactly the j
+section's text. The j-to-i half is for a person: check counts where
+they differ, and --show prints the .ij view of those places.
 """
 
 import argparse
@@ -157,6 +165,33 @@ def unpack_ijk(data: bytes) -> dict:
     return files
 
 
+# --- Rosetta check -------------------------------------------------------
+
+def check_ijk(data: bytes) -> dict:
+    """
+    Returns {"k_matches_j": True/False/None, "i_j_differences": int or
+    None, "ij": the .ij text or None}. None means the sections needed
+    for that half aren't there.
+    """
+    import pipeline  # imported here so .ij/.ijk work without oK installed
+
+    sections = unpack_ijk(data)
+    report = {"k_matches_j": None, "i_j_differences": None, "ij": None}
+    if "j" in sections and "k" in sections:
+        j_text = sections["j"][1].decode("utf-8")
+        k_source = sections["k"][1].decode("utf-8")
+        run = pipeline._ok.run_k_file(f"d:{k_source}t:0+d[`text]\n(#t;+/t;+/(1+!#t)*t)")
+        expected = " ".join(str(n) for n in pipeline._fingerprint(j_text))
+        report["k_matches_j"] = run.ok and run.stdout.split() == expected.split()
+    if "i" in sections and "j" in sections:
+        i_text = sections["i"][1].decode("utf-8")
+        j_text = sections["j"][1].decode("utf-8")
+        ij = merge_ij(i_text, j_text)
+        report["i_j_differences"] = sum(1 for l in _lines(ij) if l.rstrip("\r\n") == OPEN)
+        report["ij"] = ij
+    return report
+
+
 # --- CLI ------------------------------------------------------------------
 
 def _read(path) -> str:
@@ -170,6 +205,7 @@ def main(argv=None) -> int:
     s = sub.add_parser("split"); s.add_argument("ij"); s.add_argument("-d", default=".")
     p = sub.add_parser("pack"); p.add_argument("files", nargs="+"); p.add_argument("-o")
     u = sub.add_parser("unpack"); u.add_argument("ijk"); u.add_argument("-d", default=".")
+    c = sub.add_parser("check"); c.add_argument("ijk"); c.add_argument("--show", action="store_true")
     args = parser.parse_args(argv)
 
     if args.cmd == "merge":
@@ -198,6 +234,20 @@ def main(argv=None) -> int:
             dest = Path(args.d) / Path(name).name
             dest.write_bytes(data)
             print(f"wrote {dest}")
+    elif args.cmd == "check":
+        r = check_ijk(Path(args.ijk).read_bytes())
+        k = {True: "yes, exactly", False: "NO", None: "can't tell (needs j and k)"}[r["k_matches_j"]]
+        print(f"k says what j says: {k}")
+        n = r["i_j_differences"]
+        if n is None:
+            print("j against i: can't tell (needs i and j)")
+        elif n == 0:
+            print("j against i: identical")
+        else:
+            print(f"j against i: {n} place(s) differ -- a person decides if they say the same thing")
+            if args.show:
+                print(r["ij"], end="")
+        return 0 if r["k_matches_j"] is not False else 1
     return 0
 
 

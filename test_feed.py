@@ -58,14 +58,15 @@ def test_single_document_feed():
     assert _run(text, "corpus`name") == ',"hello"'
 
 
-def test_ijk_uses_its_k_or_compiles_its_j():
+def test_ijk_uses_its_k_or_compiles_its_j_never_its_i():
     d = Path(tempfile.mkdtemp())
-    j = b"Title\nBody.\n"
+    i, j = b"Draft title\n-? open question\n", b"Title\nBody.\n"
     k = pipeline._stage2.j_to_k(str(_corpus({"x": j.decode()}) / "x.j")).encode()
-    (d / "with.ijk").write_bytes(ijk_files.pack_ijk({"i": ("with.i", j), "j": ("with.j", j), "k": ("with.k", k)}))
-    (d / "without.ijk").write_bytes(ijk_files.pack_ijk({"i": ("without.i", j), "j": ("without.j", j)}))
+    (d / "with.ijk").write_bytes(ijk_files.pack_ijk({"i": ("with.i", i), "j": ("with.j", j), "k": ("with.k", k)}))
+    (d / "without.ijk").write_bytes(ijk_files.pack_ijk({"i": ("without.i", i), "j": ("without.j", j)}))
     text = feed.build_feed(feed.collect([str(d)]))
     assert _run(text, "corpus`title") == '("Title"\n "Title")'
+    assert "Draft" not in text and "open question" not in text
 
 
 def test_directory_prefers_k_then_ijk_then_j_then_i():
@@ -73,13 +74,25 @@ def test_directory_prefers_k_then_ijk_then_j_then_i():
     assert picked == {"escapes": ".k", "hello": ".k", "revised": ".k"}
 
 
-def test_not_ready_file_is_refused():
-    try:
-        feed.build_feed([ROOT / "samples" / "src" / "open.i"])
-    except ValueError as e:
-        assert "readiness" in str(e)
-        return
-    raise AssertionError("fed a file that isn't ready")
+def test_the_i_side_never_goes_in():
+    # Judah, OPERATIONS.i: identities must be preserved; minimize leaks.
+    d = Path(tempfile.mkdtemp())
+    (d / "a.i").write_text("A\nonly a draft\n", encoding="utf-8")
+    (d / "b.i").write_text("B\ndraft\n", encoding="utf-8")
+    (d / "b.j").write_text("B\nconfirmed\n", encoding="utf-8")
+    (d / "c.ij").write_text("C\n", encoding="utf-8")
+    (d / "d.ijk").write_bytes(ijk_files.pack_ijk({"i": ("d.i", b"D\nsecret\n")}))
+    skipped = []
+    files = feed.collect([str(d)], skipped)
+    assert [f.name for f in files] == ["b.j", "d.ijk"]
+    assert [s.name for s in skipped] == ["a.i"]
+    for refused in [d / "a.i", d / "c.ij", d / "d.ijk"]:
+        try:
+            feed.build_feed([refused])
+        except ValueError:
+            continue
+        raise AssertionError(f"fed {refused.name}")
+    assert "draft" not in feed.build_feed([d / "b.j"])
 
 
 def test_candidate_ops_match_python():

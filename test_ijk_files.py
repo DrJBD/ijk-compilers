@@ -118,6 +118,28 @@ def test_cli_round_trip_through_files():
             assert (out / f"x.{ext}").read_bytes() == (d / f"x.{ext}").read_bytes()
 
 
+def test_rosetta_check_on_the_samples():
+    samples = Path(__file__).parent / "samples"
+    hello = ijk_files.check_ijk((samples / "hello.ijk").read_bytes())
+    assert hello["k_matches_j"] is True and hello["i_j_differences"] == 0
+    revised = ijk_files.check_ijk((samples / "revised.ijk").read_bytes())
+    assert revised["k_matches_j"] is True and revised["i_j_differences"] == 1
+
+
+def test_rosetta_check_catches_a_k_that_says_something_else():
+    files = unpack_ijk((Path(__file__).parent / "samples" / "hello.ijk").read_bytes())
+    name, k = files["k"]
+    files["k"] = (name, k.replace(b"nothing to ask", b"nothing to say"))
+    assert ijk_files.check_ijk(pack_ijk(files))["k_matches_j"] is False
+    files["k"] = (name, k.replace(b'block either.\\n")', b'block either.")'))  # lost final newline
+    assert ijk_files.check_ijk(pack_ijk(files))["k_matches_j"] is False
+
+
+def test_rosetta_check_says_when_it_cant_tell():
+    r = ijk_files.check_ijk(pack_ijk({"i": ("a.i", b"x\n")}))
+    assert r["k_matches_j"] is None and r["i_j_differences"] is None
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     failed = 0

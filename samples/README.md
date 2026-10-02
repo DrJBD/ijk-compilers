@@ -9,7 +9,7 @@ to an author's confirmed words, to data in K.
 | `.j` | The author's confirmed words, with nothing left open. It starts as an exact copy of the `.i`, and the author may revise it from there. | Promoted from a `.i` with no blocking markers. Stage 1 only reports whether a file is ready; the author does the promoting. |
 | `.k` | The `.j` as K data, which runs in [oK](https://github.com/JohnEarnest/ok). | Compiled from a `.j` by stage 2. |
 | `.ij` | The merged result of a `.i` and a `.j`. | `ijk_files.py merge`. |
-| `.ijk` | The `.i`, `.j` and `.k` together in one file. | `ijk_files.py pack`. |
+| `.ijk` | The `.i`, `.j` and `.k` together in one file: a Rosetta stone, the same thing said three ways. | `ijk_files.py pack`; `ijk_files.py check` tests it. |
 
 Both combined formats are lossless: `split` and `unpack` give back the
 original files byte for byte, line endings included.

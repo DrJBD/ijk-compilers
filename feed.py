@@ -18,7 +18,14 @@ Where each document's dict comes from:
 
     .k     used as it is
     .ijk   its k section; if it has none, its j section is compiled
-    .i/.j  compiled through the pipeline, which must pass every stage
+    .j     compiled through the pipeline, which must pass every stage
+
+The .i side never goes in: not a .i file, not a .ijk's i section, not
+a .ij (which holds the .i text). Judah, OPERATIONS.i: "The corpus
+should not carry the .i side ... as identities must be preserved.
+Unfortunately there are leaks from triangulation which is a known risk
+and must be minimized." A directory's .i files are skipped and named
+on stderr; a .i given directly is refused.
 
 The output runs as `node repl.js feed.k`, can be piped into the
 interactive REPL, and can be pasted into oK's browser REPL, which has
@@ -49,40 +56,48 @@ def _compile(path: Path) -> str:
 
 
 def k_dict_for(path: Path) -> str:
-    """The one-line K dict expression for a file of any ijk type."""
+    """The one-line K dict expression for a .k, .ijk or .j file."""
     if path.suffix == ".k":
         return path.read_text(encoding="utf-8").strip()
     if path.suffix == ".ijk":
         sections = ijk_files.unpack_ijk(path.read_bytes())
         if "k" in sections:
             return sections["k"][1].decode("utf-8").strip()
-        source = sections.get("j") or sections["i"]
+        if "j" not in sections:
+            raise ValueError(f"{path.name}: has only an i section, which never goes in a corpus")
         with tempfile.TemporaryDirectory() as d:
-            tmp = Path(d) / source[0]
-            tmp.write_bytes(source[1])
+            tmp = Path(d) / sections["j"][0]
+            tmp.write_bytes(sections["j"][1])
             return _compile(tmp).strip()
-    if path.suffix in (".i", ".j"):
+    if path.suffix == ".j":
         return _compile(path).strip()
+    if path.suffix in (".i", ".ij"):
+        raise ValueError(f"{path.name}: the .i side never goes in a corpus")
     raise ValueError(f"{path.name}: not an ijk file")
 
 
-def collect(targets) -> list:
+def collect(targets, skipped=None) -> list:
     """Files in the order given; a directory contributes one file per
-    name, preferring .k, then .ijk, then .j, then .i."""
-    preference = (".k", ".ijk", ".j", ".i")
+    name, preferring .k, then .ijk, then .j. A name with only a .i is
+    skipped and added to `skipped`."""
+    preference = (".k", ".ijk", ".j")
     files = []
     for t in targets:
         p = Path(t).expanduser()
         if not p.is_dir():
             files.append(p)
             continue
-        best = {}
+        best, only_i = {}, set()
         for f in p.iterdir():
-            if f.suffix in preference:
+            if f.suffix == ".i":
+                only_i.add(f.stem)
+            elif f.suffix in preference:
                 current = best.get(f.stem)
                 if current is None or preference.index(f.suffix) < preference.index(current.suffix):
                     best[f.stem] = f
         files.extend(best[name] for name in sorted(best))
+        if skipped is not None:
+            skipped.extend(sorted(p / f"{n}.i" for n in only_i - set(best)))
     return files
 
 
@@ -116,7 +131,10 @@ def main(argv=None) -> int:
                         help="K file to append after the feed (repeatable), e.g. candidate_ops.k")
     args = parser.parse_args(argv)
 
-    files = collect(args.targets)
+    skipped = []
+    files = collect(args.targets, skipped)
+    for s in skipped:
+        print(f"skipped {s.name}: the .i side never goes in a corpus", file=sys.stderr)
     if not files:
         print("no ijk files found", file=sys.stderr)
         return 1
