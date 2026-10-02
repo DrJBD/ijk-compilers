@@ -18,6 +18,7 @@ Confirmed by direct testing, 2026-09-14, not assumed:
 import os
 import re
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -87,6 +88,33 @@ def run_k(source: str, use_prelude: bool = True) -> OkResult:
     for pattern in _ERROR_PATTERNS:
         errors.extend(m.group(0).strip() for m in pattern.finditer(proc.stdout))
 
+    return OkResult(source=source, stdout=proc.stdout, ok=not errors, errors=errors)
+
+
+def run_k_file(source: str) -> OkResult:
+    """
+    Runs K source the way `node repl.js FILE` does: parsed as one
+    program, only the final value printed, whole (the REPL can spread a
+    long value over several lines). An error there is an uncaught
+    exception, so a non-zero exit is the failure signal; its message is
+    taken from stderr.
+    """
+    if not _REPL.exists():
+        raise FileNotFoundError(f"oK REPL not found at {_REPL}")
+    with tempfile.NamedTemporaryFile("w", suffix=".k", delete=False, encoding="utf-8") as f:
+        f.write(source)
+        path = f.name
+    try:
+        proc = subprocess.run(
+            ["node", str(_REPL), path], capture_output=True, text=True, timeout=30
+        )
+    finally:
+        os.unlink(path)
+    errors = []
+    if proc.returncode != 0:
+        errors = [l.strip() for l in proc.stderr.splitlines() if l.startswith("Error:")] or [
+            proc.stderr.strip()
+        ]
     return OkResult(source=source, stdout=proc.stdout, ok=not errors, errors=errors)
 
 

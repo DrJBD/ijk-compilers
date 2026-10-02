@@ -41,6 +41,23 @@ and `.ijk` (all three in one file). See `samples/README.md` for what
 each file type is, with
 sample `.k` output that runs on its own in oK.
 
+## Feeding oK
+
+`feed.py` turns any mix of `.i`, `.j`, `.k` and `.ijk` files into one
+self-contained K program. It defines `docs` (each document's `.k`
+dict) and `corpus` (the same documents as columns: `name`, `title`,
+`body`, `text`).
+
+```sh
+python3 feed.py samples/ -o feed.k        # then: node ~/code/ok/repl.js feed.k
+python3 feed.py samples/ -e 'corpus`title'
+python3 feed.py samples/ --prelude candidate_ops.k -e 'find["oK"]'
+```
+
+The output also pastes into oK's browser REPL. Which operations belong
+on top of the corpus is open; `candidate_ops.k` holds tested
+candidates and `OPERATIONS.i` the open questions.
+
 ## Running the tests
 
 Needs Python 3 and Node. Stage 2 and the harness also need a clone of
@@ -66,6 +83,7 @@ its own directory, starting at the repo root:
 (cd oK_verification && python3 test_run_ok_test.py)
 python3 test_pipeline.py
 python3 test_ijk_files.py
+python3 test_feed.py
 ```
 
 ## Notes

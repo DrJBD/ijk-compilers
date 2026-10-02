@@ -4,7 +4,7 @@ both a genuine pass and a genuine failure, so a false-positive
 "everything's ok" isn't possible.
 """
 
-from run_ok_test import run_k, assert_k_ok
+from run_ok_test import run_k, run_k_file, assert_k_ok
 
 
 def test_real_success_detected():
@@ -73,6 +73,14 @@ def test_string_value_mentioning_an_error_is_not_a_failure():
     for source in ['"parse error. x expected."', '"the name \'x\' has not been defined."']:
         result = run_k(source, use_prelude=False)
         assert result.ok, (source, result.errors)
+
+
+def test_file_mode_prints_the_whole_final_value_and_catches_errors():
+    result = run_k_file('a:1\n("one";"two";"three")')
+    assert result.ok, result.errors
+    assert result.stdout.strip() == '("one"\n "two"\n "three")'
+    bad = run_k_file("1 2+1 2 3")
+    assert not bad.ok and bad.errors == ["Error: length error."], bad.errors
 
 
 if __name__ == "__main__":
