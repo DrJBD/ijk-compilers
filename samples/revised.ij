@@ -1,0 +1,9 @@
+Revised
+- This line was settled before the .j was written.
+<<<<<<< .i
+-- A drafted paragraph, which the author went on to rewrite.
+-? Should the last line stay?
+=======
+The author's own rewrite of that paragraph.
+>>>>>>> .j
+The last line.

@@ -1,0 +1,21 @@
+============================================================
+i: hello.i (170 bytes)
+============================================================
+Hello, oK
+- An approved line: ready, nothing to ask.
+-- A draft paragraph, not reviewed yet. Drafts don't block.
+-? An inline question can stay; it doesn't block either.
+
+============================================================
+j: hello.j (170 bytes)
+============================================================
+Hello, oK
+- An approved line: ready, nothing to ask.
+-- A draft paragraph, not reviewed yet. Drafts don't block.
+-? An inline question can stay; it doesn't block either.
+
+============================================================
+k: hello.k (372 bytes)
+============================================================
+`title`body`text!("Hello, oK";"- An approved line: ready, nothing to ask.\n-- A draft paragraph, not reviewed yet. Drafts don't block.\n-? An inline question can stay; it doesn't block either.";"Hello, oK\n- An approved line: ready, nothing to ask.\n-- A draft paragraph, not reviewed yet. Drafts don't block.\n-? An inline question can stay; it doesn't block either.\n")
+

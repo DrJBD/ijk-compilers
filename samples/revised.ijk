@@ -1,0 +1,22 @@
+============================================================
+i: revised.i (165 bytes)
+============================================================
+Revised
+- This line was settled before the .j was written.
+-- A drafted paragraph, which the author went on to rewrite.
+-? Should the last line stay?
+The last line.
+
+============================================================
+j: revised.j (118 bytes)
+============================================================
+Revised
+- This line was settled before the .j was written.
+The author's own rewrite of that paragraph.
+The last line.
+
+============================================================
+k: revised.k (268 bytes)
+============================================================
+`title`body`text!("Revised";"- This line was settled before the .j was written.\nThe author's own rewrite of that paragraph.\nThe last line.";"Revised\n- This line was settled before the .j was written.\nThe author's own rewrite of that paragraph.\nThe last line.\n")
+

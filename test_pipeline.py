@@ -93,16 +93,18 @@ def test_round_trip_catches_lost_whitespace():
     assert result.failed_at == "round-trip", result.summary()
 
 
-def test_committed_samples_match_what_the_compiler_produces_now():
+def test_committed_samples_match_what_the_build_produces_now():
+    sys.path.insert(0, str(Path(__file__).parent / "samples"))
+    import build
     samples = Path(__file__).parent / "samples"
-    for src in sorted((samples / "src").glob("*.i")):
-        result = pipeline.run_pipeline(src)
-        k_file = samples / f"{src.stem}.k"
-        if not result.ok:
-            assert not k_file.exists(), f"{k_file.name} exists but {src.name} isn't ready"
-            continue
-        assert k_file.read_text(encoding="utf-8") == result.k_source, f"{k_file.name} is stale"
-        assert (samples / f"{src.stem}.j").read_bytes() == src.read_bytes()
+    outputs = [".j", ".k", ".ij", ".ijk"]
+    with tempfile.TemporaryDirectory() as fresh:
+        build.build(Path(fresh))
+        made = sorted(f.name for f in Path(fresh).iterdir())
+        committed = sorted(f.name for f in samples.iterdir() if f.suffix in outputs)
+        assert made == committed, (made, committed)
+        for name in made:
+            assert (Path(fresh) / name).read_bytes() == (samples / name).read_bytes(), f"{name} is stale"
 
 
 if __name__ == "__main__":

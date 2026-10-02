@@ -36,7 +36,9 @@ python3 pipeline.py path/to/dir/ --out build/   # also write .j and .k
 It writes nothing unless given `--out`, and never renames or edits a
 source file.
 
-See `samples/README.md` for what `.i`, `.j` and `.k` files are, with
+`ijk_files.py` makes and takes apart `.ij` (a `.i` and `.j` merged)
+and `.ijk` (all three in one file). See `samples/README.md` for what
+each file type is, with
 sample `.k` output that runs on its own in oK.
 
 ## Running the tests
@@ -63,6 +65,7 @@ its own directory, starting at the repo root:
 (cd stage2_j_to_k   && python3 test_transform.py && python3 test_validators.py)
 (cd oK_verification && python3 test_run_ok_test.py)
 python3 test_pipeline.py
+python3 test_ijk_files.py
 ```
 
 ## Notes

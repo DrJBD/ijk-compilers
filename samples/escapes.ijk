@@ -1,0 +1,23 @@
+============================================================
+i: escapes.i (185 bytes)
+============================================================
+Escapes
+
+C writes a newline as \n, and Windows ends a line with \r\n.
+This file really does end its lines that way.
+A "quoted" word, a tab:	here, an em dash — and an emoji 😀.
+
+============================================================
+j: escapes.j (185 bytes)
+============================================================
+Escapes
+
+C writes a newline as \n, and Windows ends a line with \r\n.
+This file really does end its lines that way.
+A "quoted" word, a tab:	here, an em dash — and an emoji 😀.
+
+============================================================
+k: escapes.k (515 bytes)
+============================================================
+`title`body`text!("Escapes";("C writes a newline as ",(`c$92),"n, and Windows ends a line with ",(`c$92),"r",(`c$92),"n.\nThis file really does end its lines that way.\nA \"quoted\" word, a tab:	here, an em dash — and an emoji 😀.");("Escapes",(`c$13),"\n",(`c$13),"\nC writes a newline as ",(`c$92),"n, and Windows ends a line with ",(`c$92),"r",(`c$92),"n.",(`c$13),"\nThis file really does end its lines that way.",(`c$13),"\nA \"quoted\" word, a tab:	here, an em dash — and an emoji 😀.",(`c$13),"\n"))
+
