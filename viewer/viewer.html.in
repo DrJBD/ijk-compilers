@@ -8,16 +8,19 @@
 :root {
   --bg: #fbfaf7; --panel: #ffffff; --ink: #1f1f1d; --muted: #6b6a65;
   --line: #e4e2dc; --accent: #2f5d8a; --error: #a33a2c; --pick: #eef3f8;
+  --good: #2e6b3f; --code: #f4f2ec;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #161615; --panel: #1e1e1c; --ink: #ecebe6; --muted: #9a9890;
     --line: #34332f; --accent: #8db6dd; --error: #e08a7c; --pick: #23303c;
+    --good: #8cc79c; --code: #191918;
   }
 }
 :root[data-theme="dark"] {
   --bg: #161615; --panel: #1e1e1c; --ink: #ecebe6; --muted: #9a9890;
   --line: #34332f; --accent: #8db6dd; --error: #e08a7c; --pick: #23303c;
+  --good: #8cc79c; --code: #191918;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); height: 100vh;
@@ -26,27 +29,49 @@ body { margin: 0; background: var(--bg); color: var(--ink); height: 100vh;
 header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
 header h1 { margin: 0; font-size: 17px; font-weight: 600; }
 header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); }
-nav { border-right: 1px solid var(--line); overflow-y: auto; }
-nav button { display: block; width: 100%; text-align: left; padding: 9px 16px; border: 0;
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(200px, 270px) minmax(0, 1fr); }
+nav { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+#find { margin: 10px 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: inherit; font: inherit; font-size: 14px; }
+#found { margin: -4px 12px 8px; color: var(--muted); font-size: 12px; min-height: 1.4em; }
+#list { overflow-y: auto; flex: 1; border-top: 1px solid var(--line); }
+#list button { display: block; width: 100%; text-align: left; padding: 9px 16px; border: 0;
   border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; cursor: pointer; }
-nav button:hover, nav button[aria-current="true"] { background: var(--pick); }
-nav .name { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
-section { display: flex; flex-direction: column; min-width: 0; }
-#doc { flex: 1; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap; word-break: break-word;
-  font: 14px/1.55 ui-monospace, Menlo, monospace; background: var(--panel); }
-#repl { border-top: 1px solid var(--line); padding: 12px 16px; }
-#log { max-height: 30vh; overflow: auto; margin: 0 0 8px; white-space: pre-wrap; word-break: break-word;
+#list button:hover, #list button[aria-current="true"] { background: var(--pick); }
+#list button[hidden] { display: none; }
+.name { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+.mark { float: right; font-size: 12px; }
+.agree { color: var(--good); } .differ { color: var(--error); } .none { color: var(--muted); }
+section { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+#dochead { padding: 10px 16px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap;
+  gap: 4px 14px; align-items: baseline; }
+#dochead h2 { margin: 0; font-size: 16px; font-weight: 600; }
+#badge { font-size: 13px; }
+#panes { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.pane + .pane { border-left: 1px solid var(--line); }
+.pane h3 { margin: 0; padding: 6px 16px; font-size: 12px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--line); }
+.pane pre { flex: 1; margin: 0; padding: 14px 16px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font: 13.5px/1.55 ui-monospace, Menlo, monospace; }
+#text { background: var(--panel); }
+#ksrc { background: var(--code); color: var(--muted); }
+#repl { border-top: 1px solid var(--line); padding: 10px 16px 12px; }
+#log { max-height: 24vh; overflow: auto; margin: 0 0 8px; white-space: pre-wrap; word-break: break-word;
   font: 13px/1.45 ui-monospace, Menlo, monospace; }
 #log .in { color: var(--accent); }
 #log .err { color: var(--error); }
 #q { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
   background: var(--panel); color: inherit; font: 14px ui-monospace, Menlo, monospace; }
 .hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   body { height: auto; }
   main { grid-template-columns: minmax(0, 1fr); }
-  nav { border-right: 0; border-bottom: 1px solid var(--line); max-height: 35vh; }
+  nav { border-right: 0; border-bottom: 1px solid var(--line); }
+  #list { max-height: 30vh; }
+  #panes { grid-template-columns: minmax(0, 1fr); }
+  .pane + .pane { border-left: 0; border-top: 1px solid var(--line); }
+  .pane pre { max-height: 45vh; }
 }
 </style>
 </head>
@@ -56,9 +81,17 @@ section { display: flex; flex-direction: column; min-width: 0; }
   <p id="summary">Loading…</p>
 </header>
 <main>
-  <nav id="list" aria-label="Documents"></nav>
+  <nav aria-label="Documents">
+    <input id="find" type="search" autocomplete="off" spellcheck="false" placeholder="Find (K does the search)">
+    <div id="found" aria-live="polite"></div>
+    <div id="list"></div>
+  </nav>
   <section>
-    <pre id="doc">Pick a document.</pre>
+    <div id="dochead"><h2 id="doctitle">Pick a document</h2><span id="badge"></span></div>
+    <div id="panes">
+      <div class="pane"><h3>Text · human reading</h3><pre id="text"></pre></div>
+      <div class="pane"><h3>.k · machine reading</h3><pre id="ksrc"></pre></div>
+    </div>
     <div id="repl">
       <div id="log" aria-live="polite"></div>
       <input id="q" autocomplete="off" spellcheck="false" placeholder="K expression, e.g. corpus`title  —  Enter to run">
@@ -76,7 +109,20 @@ oK, by John Earnest -- https://github.com/JohnEarnest/ok
 </script>
 
 <script id="viewer-core">
+// Everything here lives on one object: oK.js defines globals of its own
+// (find, for one), and a page-level function of the same name would
+// replace it and break oK from the inside.
+var viewer = (function () {
 var FEED = @@FEED@@;
+var KSRC = @@KSRC@@;
+var JTEXT = @@JTEXT@@;
+
+// Search helpers, named so they can't collide with a prelude's own.
+var VIEWER_K = [
+  "viewerhas:{[s;p] p:(),p; i:&s=*p; i:i@&i<1+(#s)-#p; 0<+/p~/:(#p)#'i_\\:s}",
+  "viewerlow:{_x}'corpus`text",
+  "viewerfind:{p:_(),x; {viewerhas[x;y]}[;p]'viewerlow}"
+].join("\n");
 
 // A K string (list of character codes) back to a JS string; anything
 // else in K's printed form.
@@ -86,9 +132,22 @@ function kText(x) {
     return x.v.map(function (c) { return String.fromCharCode(c.v); }).join("");
   return format(x);
 }
+// A JS string as a K expression, by stage 2's rules (k_string in
+// stage2_j_to_k/transform.py): CR and backslash spliced by code, since
+// oK can't be trusted to read them back from a literal; one character
+// enlisted, since "a" alone is an atom.
+function kString(s) {
+  function esc(p) { return p.replace(/"/g, '\\"').replace(/\n/g, "\\n"); }
+  if (!/[\r\\]/.test(s)) return (s.length == 1 ? "," : "") + '"' + esc(s) + '"';
+  var parts = s.split(/([\r\\])/).filter(function (p) { return p !== ""; }).map(function (p) {
+    return p == "\r" ? "(`c$13)" : p == "\\" ? "(`c$92)" : '"' + esc(p) + '"';
+  });
+  return parts.length > 1 ? "(" + parts.join(",") + ")" : "," + parts[0];
+}
 function loadFeed(feedText) {
   var env = baseEnv();
   run(parse(feedText), env);
+  run(parse(VIEWER_K), env);
   return env;
 }
 function evaluate(env, src) {
@@ -102,43 +161,104 @@ function rows(env) {
 function docText(env, i) {
   return kText(run(parse("(docs " + i + ")`text"), env));
 }
+// Length, sum, and position-weighted sum of UTF-16 code units: the
+// same fingerprint pipeline.py uses, computed once by oK over what the
+// .k holds and once here over the .j text.
+function fingerprintK(env, i) {
+  var r = run(parse("{(#x;+/x;+/(1+!#x)*x)}0+(docs " + i + ")`text"), env);
+  return r.v.map(function (n) { return n.v; });
+}
+function fingerprintJS(s) {
+  var n = s.length, sum = 0, w = 0;
+  for (var k = 0; k < n; k++) { var c = s.charCodeAt(k); sum += c; w += (k + 1) * c; }
+  return [n, sum, w];
+}
+// true: the .k says exactly what the .j says. false: it doesn't.
+// null: there's no .j to compare against.
+function rosetta(env, i) {
+  if (JTEXT[i] == null) return null;
+  var a = fingerprintK(env, i), b = fingerprintJS(JTEXT[i]);
+  return a.length == 3 && a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+}
+// One 0/1 per document: does its text contain the pattern, ignoring case.
+function find(env, pattern) {
+  if (pattern === "") return null;
+  return run(parse("viewerfind[" + kString(pattern) + "]"), env).v.map(function (b) { return b.v; });
+}
+return { FEED: FEED, KSRC: KSRC, JTEXT: JTEXT, kText: kText, kString: kString, loadFeed: loadFeed,
+         evaluate: evaluate, rows: rows, docText: docText, fingerprintK: fingerprintK,
+         fingerprintJS: fingerprintJS, rosetta: rosetta, find: find };
+})();
 </script>
 
 <script>
 (function () {
-  var env, history = [], at = 0;
-  var list = document.getElementById("list"), doc = document.getElementById("doc");
+  var env, history = [], at = 0, marks = [];
+  var list = document.getElementById("list"), text = document.getElementById("text");
+  var ksrc = document.getElementById("ksrc"), badge = document.getElementById("badge");
   var log = document.getElementById("log"), q = document.getElementById("q");
-  function line(text, cls) {
+  var findBox = document.getElementById("find"), found = document.getElementById("found");
+  var LABEL = {
+    "true": ["agree", "✓ k says what j says"],
+    "false": ["differ", "✗ k and j differ"],
+    "null": ["none", "– no .j to compare"]
+  };
+  function line(t, cls) {
     var d = document.createElement("div");
     if (cls) d.className = cls;
-    d.textContent = text;
+    d.textContent = t;
     log.appendChild(d);
     log.scrollTop = log.scrollHeight;
   }
-  try { env = loadFeed(FEED); }
+  try { env = viewer.loadFeed(viewer.FEED); }
   catch (e) { document.getElementById("summary").textContent = "The feed didn't load: " + e.message; return; }
-  var r = rows(env);
-  document.getElementById("summary").textContent = r.length + " document" + (r.length == 1 ? "" : "s") + ", loaded into oK in this page.";
+  var r = viewer.rows(env), agreeing = 0;
   r.forEach(function (row, i) {
+    marks[i] = viewer.rosetta(env, i);
+    if (marks[i] === true) agreeing++;
+    var label = LABEL[String(marks[i])];
     var b = document.createElement("button");
-    b.innerHTML = "<span class='name'></span><span class='title'></span>";
+    b.innerHTML = "<span class='mark'></span><span class='name'></span><span class='title'></span>";
+    b.querySelector(".mark").className = "mark " + label[0];
+    b.querySelector(".mark").textContent = label[1].charAt(0);
+    b.querySelector(".mark").title = label[1];
     b.querySelector(".name").textContent = row.name;
     b.querySelector(".title").textContent = row.title || "(untitled)";
     b.onclick = function () {
       list.querySelectorAll("button").forEach(function (x) { x.removeAttribute("aria-current"); });
       b.setAttribute("aria-current", "true");
-      doc.textContent = docText(env, i);
+      document.getElementById("doctitle").textContent = row.title || row.name;
+      badge.className = label[0];
+      badge.textContent = label[1];
+      text.textContent = viewer.docText(env, i);
+      ksrc.textContent = viewer.KSRC[i];
     };
     list.appendChild(b);
   });
+  document.getElementById("summary").textContent = r.length + " document" + (r.length == 1 ? "" : "s") +
+    ", loaded into oK in this page. Rosetta check: " + agreeing + " of " + r.length + " agree.";
+  if (list.firstChild) list.firstChild.click();
+
+  var pending;
+  findBox.addEventListener("input", function () {
+    clearTimeout(pending);
+    pending = setTimeout(function () {
+      var hits;
+      try { hits = viewer.find(env, findBox.value); }
+      catch (e) { found.textContent = "Search failed: " + e.message; return; }
+      var buttons = list.querySelectorAll("button"), n = 0;
+      buttons.forEach(function (b, i) { var show = !hits || hits[i] == 1; b.hidden = !show; if (show) n++; });
+      found.textContent = hits ? n + " of " + buttons.length + " contain it" : "";
+    }, 120);
+  });
+
   q.addEventListener("keydown", function (e) {
     if (e.key == "ArrowUp" && at > 0) { q.value = history[--at]; e.preventDefault(); return; }
     if (e.key == "ArrowDown") { at = Math.min(at + 1, history.length); q.value = history[at] || ""; e.preventDefault(); return; }
     if (e.key != "Enter" || !q.value.trim()) return;
     var src = q.value; history.push(src); at = history.length; q.value = "";
     line("  " + src, "in");
-    var res = evaluate(env, src);
+    var res = viewer.evaluate(env, src);
     line(res.out, res.ok ? "" : "err");
   });
 })();

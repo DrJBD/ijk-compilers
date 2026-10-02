@@ -106,6 +106,21 @@ def test_crlf_file_keeps_its_line_endings():
     )
 
 
+def test_a_lone_emoji_is_a_string_not_a_nested_list():
+    # oK holds an emoji as two UTF-16 units, so it's already a list.
+    for text in ["\U0001F600", "\u00e9", "x"]:
+        expected = " ".join(str(c) for c in _utf16_codes(text))
+        assert _codes(k_string(text)) == expected, text
+    path = _write_j("Title\n\U0001F600")
+    result = run_k(f"d:{j_to_k(path)}#d[`body]")
+    assert result.stdout.strip().splitlines()[-1].strip() == "2"
+
+
+def _utf16_codes(text):
+    u = text.encode("utf-16-le")
+    return [int.from_bytes(u[i:i + 2], "little") for i in range(0, len(u), 2)]
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     failed = 0

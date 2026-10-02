@@ -47,15 +47,22 @@ _SPLICED = {"\r": 13, "\\": 92}
 _SPLIT = re.compile("([" + re.escape("".join(_SPLICED)) + "])")
 
 
+def _utf16_len(text: str) -> int:
+    return len(text.encode("utf-16-le")) // 2
+
+
 def k_string(text: str) -> str:
     """
     A K expression that evaluates to exactly `text` as a char list.
     One character is enlisted (`,"a"`), since a bare `"a"` is an atom
-    in K, not a one-item list.
+    in K, not a one-item list. "One character" is counted as oK counts,
+    in UTF-16 units: an emoji is two, already a list, and enlisting it
+    would nest it (a lone emoji once compiled to `,"😀"`, a list holding
+    a string).
     """
     if not _SPLIT.search(text):
         literal = f'"{escape_k_string(text)}"'
-        return "," + literal if len(text) == 1 else literal
+        return "," + literal if _utf16_len(text) == 1 else literal
     parts = [
         f"(`c${_SPLICED[p]})" if p in _SPLICED else f'"{escape_k_string(p)}"'
         for p in _SPLIT.split(text)

@@ -10,11 +10,11 @@ them in order and reports how far it got:
     3. validate    -- stage 2's .k validators (currently ok -> oK).
     4. evaluate    -- the .k source runs cleanly in the real oK
                       interpreter.
-    5. round-trip  -- inside oK, the dict's `text` matches the source
-                      file exactly (length, sum and position-weighted
-                      sum of its characters, computed separately in
-                      oK and in Python), and `title`/`body` match
-                      under K's own `~`.
+    5. round-trip  -- inside oK, every field of the dict matches what
+                      it should hold: `text` the source exactly,
+                      `title`/`body` the trimmed view (length, sum and
+                      position-weighted sum of the characters, computed
+                      separately in oK and in Python).
 
 Writes nothing by default. Stage 1's rule holds here too: the
 pipeline reports on a .i file, it never renames it or resolves its
@@ -127,20 +127,20 @@ def run_pipeline(path) -> PipelineResult:
 
     source = path.read_text(encoding="utf-8", newline="")
     title, body = _expected_title_body(source)
-    k_string = _stage2.k_string
-    check = _ok.run_k(
-        f"d:{k_source}t:0+d[`text]\n"
-        f"(d[`title]~{k_string(title)};d[`body]~{k_string(body)})\n"
-        f"(#t;+/t;+/(1+!#t)*t)"
+    # Every field fingerprinted twice, in oK and in Python. Comparing a
+    # field against k_string's own output would let an escaping bug agree
+    # with itself (a lone emoji in a body once did exactly that).
+    check = _ok.run_k_file(
+        f"d:{k_source},/{{(#x;+/x;+/(1+!#x)*x)}}'0+'(d`title;d`body;d`text)"
     )
-    lines = check.stdout.strip().splitlines()
-    expected = " ".join(str(n) for n in _fingerprint(source))
-    if not check.ok or lines[-2].strip() != "1 1" or lines[-1].strip() != expected:
+    got = check.stdout.split()
+    expected = [str(n) for field in (title, body, source) for n in _fingerprint(field)]
+    if not check.ok or got != expected:
         result.failed_at = "round-trip"
         result.detail = (
-            "oK reported (title match; body match), then text (length sum weighted):\n"
-            + "\n".join(lines[-2:])
-            + f"\nexpected text fingerprint: {expected}"
+            "oK's (length sum weighted) for title, body, text:\n"
+            + (" ".join(got) if check.ok else "\n".join(check.errors))
+            + "\nexpected:\n" + " ".join(expected)
         )
         return result
     result.passed.append("round-trip")
