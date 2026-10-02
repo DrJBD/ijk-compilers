@@ -76,6 +76,8 @@ EDGE = {
     "a": 'Alpha\nA "quoted" Line with \\n written out\nend.',
     "b": "Beta\r\nwindows line\r\n\u2014 dash \U0001F600\r\n",
     "c": "Gamma",
+    "d": "I am not god.\nI am not God.\nGOD",
+    "e": "",
 }
 
 
@@ -105,11 +107,18 @@ def test_page_escapes_k_strings_exactly_as_stage_2_does():
     assert out == [k_string(s) for s in samples]
 
 
-def test_find_matches_python_ignoring_case():
-    out = _js(_edge_page(), "var v=viewer, e=v.loadFeed(v.FEED); out=" + json.dumps(PATTERNS) + ".map(p=>v.find(e,p));")
+def test_find_matches_python_with_and_without_case():
     texts = list(EDGE.values())
-    for p, got in zip(PATTERNS, out):
-        assert got == [int(p.lower() in t.lower()) for t in texts], (p, got)
+    pats = PATTERNS + ["god", "God", "GOD"]
+    for match_case in (False, True):
+        out = _js(_edge_page(), "var v=viewer, e=v.loadFeed(v.FEED); out="
+                  + json.dumps(pats) + f".map(p=>v.find(e,p,{str(match_case).lower()}));")
+        for p, got in zip(pats, out):
+            norm = (lambda s: s) if match_case else str.lower
+            hits = [int(norm(p) in norm(t)) for t in texts]
+            lines = [sum(norm(p) in norm(l) for l in t.split("\n")) for t in texts]
+            assert got == {"hits": hits, "lines": lines}, (p, match_case, got)
+    assert _js(_edge_page(), "out=viewer.find(viewer.loadFeed(viewer.FEED),'',true);") is None
 
 
 if __name__ == "__main__":

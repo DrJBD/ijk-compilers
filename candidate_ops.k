@@ -2,12 +2,13 @@
 / Load after a feed: python3 feed.py DIR --prelude candidate_ops.k
 / Each one is checked against Python in test_feed.py.
 / --
-/ Two oK traps these work around. A one-character string is an atom,
-/ not a list, so patterns are enlisted with (),. And take wraps around:
-/ 3#"-" is "---", so a prefix test checks the length first.
+/ Three oK traps these work around. A one-character string is an atom,
+/ not a list, so patterns are enlisted with (),. Split fails on such an
+/ atom, so lines enlists too. And take wraps around: 3#"-" is "---", so
+/ a prefix test checks the length first.
 
 / lines of a text; prefix test; substring test (oK has no ss)
-lines:{"\n"\x}
+lines:{"\n"\(),x}
 starts:{y:(),y; $[(#y)>#x;0;y~(#y)#x]}
 has:{[s;p] p:(),p; i:&s=*p; i:i@&i<1+(#s)-#p; 0<+/p~/:(#p)#'i_\:s}
 

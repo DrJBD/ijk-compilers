@@ -31,8 +31,12 @@ header h1 { margin: 0; font-size: 17px; font-weight: 600; }
 header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(200px, 270px) minmax(0, 1fr); }
 nav { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
-#find { margin: 10px 12px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+#findrow { display: flex; align-items: center; gap: 8px; margin: 10px 12px; }
+#find { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
   background: var(--panel); color: inherit; font: inherit; font-size: 14px; }
+#findrow label { font-size: 13px; color: var(--muted); white-space: nowrap; cursor: pointer;
+  font-family: ui-monospace, Menlo, monospace; }
+.count { display: block; font-size: 12px; color: var(--accent); }
 #found { margin: -4px 12px 8px; color: var(--muted); font-size: 12px; min-height: 1.4em; }
 #list { overflow-y: auto; flex: 1; border-top: 1px solid var(--line); }
 #list button { display: block; width: 100%; text-align: left; padding: 9px 16px; border: 0;
@@ -82,7 +86,10 @@ section { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 </header>
 <main>
   <nav aria-label="Documents">
-    <input id="find" type="search" autocomplete="off" spellcheck="false" placeholder="Find (K does the search)">
+    <div id="findrow">
+      <input id="find" type="search" autocomplete="off" spellcheck="false" placeholder="Find (K does the search)">
+      <label title="Match case: god and God are different"><input id="matchcase" type="checkbox"> Aa</label>
+    </div>
     <div id="found" aria-live="polite"></div>
     <div id="list"></div>
   </nav>
@@ -121,7 +128,11 @@ var JTEXT = @@JTEXT@@;
 var VIEWER_K = [
   "viewerhas:{[s;p] p:(),p; i:&s=*p; i:i@&i<1+(#s)-#p; 0<+/p~/:(#p)#'i_\\:s}",
   "viewerlow:{_x}'corpus`text",
-  "viewerfind:{p:_(),x; {viewerhas[x;y]}[;p]'viewerlow}"
+  "viewerlines:{\"\\n\"\\(),x}'corpus`text",
+  "viewerlowlines:{\"\\n\"\\(),x}'viewerlow",
+  // (documents containing it; lines containing it, per document)
+  "viewerfind:{[p;c] t:$[c;corpus`text;viewerlow]; l:$[c;viewerlines;viewerlowlines]; p:$[c;(),p;_(),p];" +
+    " ({viewerhas[x;y]}[;p]'t;{[ls;q] +/{viewerhas[x;y]}[;q]'ls}[;p]'l)}"
 ].join("\n");
 
 // A K string (list of character codes) back to a JS string; anything
@@ -180,10 +191,13 @@ function rosetta(env, i) {
   var a = fingerprintK(env, i), b = fingerprintJS(JTEXT[i]);
   return a.length == 3 && a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
 }
-// One 0/1 per document: does its text contain the pattern, ignoring case.
-function find(env, pattern) {
+// Per document: does its text contain the pattern (hits, 0/1), and how
+// many of its lines do (lines). Case is ignored unless matchCase.
+function find(env, pattern, matchCase) {
   if (pattern === "") return null;
-  return run(parse("viewerfind[" + kString(pattern) + "]"), env).v.map(function (b) { return b.v; });
+  var r = run(parse("viewerfind[" + kString(pattern) + ";" + (matchCase ? 1 : 0) + "]"), env).v;
+  function nums(x) { return x.v.map(function (b) { return b.v; }); }
+  return { hits: nums(r[0]), lines: nums(r[1]) };
 }
 return { FEED: FEED, KSRC: KSRC, JTEXT: JTEXT, kText: kText, kString: kString, loadFeed: loadFeed,
          evaluate: evaluate, rows: rows, docText: docText, fingerprintK: fingerprintK,
@@ -198,6 +212,7 @@ return { FEED: FEED, KSRC: KSRC, JTEXT: JTEXT, kText: kText, kString: kString, l
   var ksrc = document.getElementById("ksrc"), badge = document.getElementById("badge");
   var log = document.getElementById("log"), q = document.getElementById("q");
   var findBox = document.getElementById("find"), found = document.getElementById("found");
+  var matchCase = document.getElementById("matchcase");
   var LABEL = {
     "true": ["agree", "✓ k says what j says"],
     "false": ["differ", "✗ k and j differ"],
@@ -218,7 +233,7 @@ return { FEED: FEED, KSRC: KSRC, JTEXT: JTEXT, kText: kText, kString: kString, l
     if (marks[i] === true) agreeing++;
     var label = LABEL[String(marks[i])];
     var b = document.createElement("button");
-    b.innerHTML = "<span class='mark'></span><span class='name'></span><span class='title'></span>";
+    b.innerHTML = "<span class='mark'></span><span class='name'></span><span class='title'></span><span class='count'></span>";
     b.querySelector(".mark").className = "mark " + label[0];
     b.querySelector(".mark").textContent = label[1].charAt(0);
     b.querySelector(".mark").title = label[1];
@@ -240,17 +255,22 @@ return { FEED: FEED, KSRC: KSRC, JTEXT: JTEXT, kText: kText, kString: kString, l
   if (list.firstChild) list.firstChild.click();
 
   var pending;
-  findBox.addEventListener("input", function () {
-    clearTimeout(pending);
-    pending = setTimeout(function () {
-      var hits;
-      try { hits = viewer.find(env, findBox.value); }
-      catch (e) { found.textContent = "Search failed: " + e.message; return; }
-      var buttons = list.querySelectorAll("button"), n = 0;
-      buttons.forEach(function (b, i) { var show = !hits || hits[i] == 1; b.hidden = !show; if (show) n++; });
-      found.textContent = hits ? n + " of " + buttons.length + " contain it" : "";
-    }, 120);
-  });
+  function search() {
+    var res;
+    try { res = viewer.find(env, findBox.value, matchCase.checked); }
+    catch (e) { found.textContent = "Search failed: " + e.message; return; }
+    var buttons = list.querySelectorAll("button"), n = 0;
+    buttons.forEach(function (b, i) {
+      var show = !res || res.hits[i] == 1, count = b.querySelector(".count");
+      b.hidden = !show;
+      if (show) n++;
+      count.textContent = res && show ? res.lines[i] + (res.lines[i] == 1 ? " line" : " lines") : "";
+    });
+    found.textContent = res ? n + " of " + buttons.length + " contain it" +
+      (matchCase.checked ? ", matching case" : ", ignoring case") : "";
+  }
+  findBox.addEventListener("input", function () { clearTimeout(pending); pending = setTimeout(search, 120); });
+  matchCase.addEventListener("change", search);
 
   q.addEventListener("keydown", function (e) {
     if (e.key == "ArrowUp" && at > 0) { q.value = history[--at]; e.preventDefault(); return; }
