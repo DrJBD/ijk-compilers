@@ -10,9 +10,11 @@ them in order and reports how far it got:
     3. validate    -- stage 2's .k validators (currently ok -> oK).
     4. evaluate    -- the .k source runs cleanly in the real oK
                       interpreter.
-    5. round-trip  -- inside oK, the dict's title and body match the
-                      source file's exactly (K's own `~`, not a
-                      Python-side string compare).
+    5. round-trip  -- inside oK, the dict's `text` matches the source
+                      file exactly (length, sum and position-weighted
+                      sum of its characters, computed separately in
+                      oK and in Python), and `title`/`body` match
+                      under K's own `~`.
 
 Writes nothing by default. Stage 1's rule holds here too: the
 pipeline reports on a .i file, it never renames it or resolves its
@@ -75,12 +77,22 @@ class PipelineResult:
 
 
 def _expected_title_body(text: str):
-    # Mirrors stage 2's own split, so the round-trip compares like with
+    # Mirrors stage 2's own split, so the view fields compare like with
     # like: first line is the title, the rest (stripped) is the body.
     lines = text.splitlines()
     title = lines[0].strip() if lines else ""
     body = "\n".join(lines[1:]).strip()
     return title, body
+
+
+def _fingerprint(text: str):
+    # oK holds a string as UTF-16 code units (an emoji is two), so the
+    # check counts the same way: length, sum, and position-weighted sum.
+    # Computed here in Python and separately inside oK, so a stage 2
+    # escaping bug can't make both sides agree.
+    units = text.encode("utf-16-le")
+    codes = [int.from_bytes(units[i:i + 2], "little") for i in range(0, len(units), 2)]
+    return (len(codes), sum(codes), sum((i + 1) * c for i, c in enumerate(codes)))
 
 
 def run_pipeline(path) -> PipelineResult:
@@ -113,14 +125,23 @@ def run_pipeline(path) -> PipelineResult:
         return result
     result.passed.append("evaluate")
 
-    title, body = _expected_title_body(path.read_text(encoding="utf-8"))
-    esc = _stage2.escape_k_string
+    source = path.read_text(encoding="utf-8", newline="")
+    title, body = _expected_title_body(source)
+    k_string = _stage2.k_string
     check = _ok.run_k(
-        f'd:{k_source}(d[`title]~"{esc(title)}";d[`body]~"{esc(body)}")'
+        f"d:{k_source}t:0+d[`text]\n"
+        f"(d[`title]~{k_string(title)};d[`body]~{k_string(body)})\n"
+        f"(#t;+/t;+/(1+!#t)*t)"
     )
-    if not check.ok or "1 1" not in check.stdout:
+    lines = check.stdout.strip().splitlines()
+    expected = " ".join(str(n) for n in _fingerprint(source))
+    if not check.ok or lines[-2].strip() != "1 1" or lines[-1].strip() != expected:
         result.failed_at = "round-trip"
-        result.detail = "oK reported (title match; body match):\n" + check.stdout.strip()
+        result.detail = (
+            "oK reported (title match; body match), then text (length sum weighted):\n"
+            + "\n".join(lines[-2:])
+            + f"\nexpected text fingerprint: {expected}"
+        )
         return result
     result.passed.append("round-trip")
 
@@ -158,7 +179,7 @@ def main(argv=None) -> int:
         print(r.summary())
         if out and r.ok:
             stem = r.path.stem
-            (out / f"{stem}.j").write_text(r.path.read_text(encoding="utf-8"), encoding="utf-8")
+            (out / f"{stem}.j").write_bytes(r.path.read_bytes())
             (out / f"{stem}.k").write_text(r.k_source, encoding="utf-8")
 
     passed = sum(r.ok for r in results)

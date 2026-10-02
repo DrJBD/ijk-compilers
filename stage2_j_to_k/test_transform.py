@@ -9,11 +9,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "oK_verification"))
 from run_ok_test import run_k, assert_k_ok  # noqa: E402
-from transform import escape_k_string, j_to_k, compile_j_to_k  # noqa: E402
+from transform import escape_k_string, k_string, j_to_k, compile_j_to_k  # noqa: E402
 
 
 def _write_j(text: str) -> str:
-    with tempfile.NamedTemporaryFile("w", suffix=".j", delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", suffix=".j", delete=False, newline="") as f:
         f.write(text)
         return f.name
 
@@ -63,6 +63,47 @@ def test_empty_body_still_compiles():
     path = _write_j("Just A Title")
     k_source = j_to_k(path)
     assert_k_ok(f"d:{k_source}\nd[`body]")
+
+
+def _codes(k_expr: str) -> str:
+    """oK's own character codes for a K string expression."""
+    result = run_k(f"0+{k_expr}")
+    assert result.ok, result.stdout
+    # oK prints a one-item list with a leading comma (",13").
+    return result.stdout.strip().splitlines()[-1].strip().lstrip(",")
+
+
+def test_k_string_is_exact_for_awkward_text():
+    # Carriage return has no escape in oK and breaks its parser raw;
+    # one character must be enlisted to be a list rather than an atom.
+    # A literal backslash before n, t or a quote is the case oK's own
+    # unescaping order corrupts; see _SPLICED in transform.py.
+    for text in ["a\rb", "\r", "line\r\nnext", "x", "", 'tab\there "q" \\ end\n',
+                 "\\n", "\\r\\n", '\\"', "\\t", "\\", "\\\\n"]:
+        expected = " ".join(str(ord(c)) for c in text)
+        got = _codes(k_string(text)) if text else ""
+        if text:
+            assert got == expected, (text, got)
+        assert_k_ok(f"#{k_string(text)}")
+
+
+def test_text_key_keeps_what_title_and_body_strip():
+    # The whitespace 19 of 20 real files lost before `text existed:
+    # a blank line after the title and a trailing newline.
+    source = "Title\n\nBody.\n"
+    path = _write_j(source)
+    result = run_k(f"d:{j_to_k(path)}#d[`text]")
+    assert result.ok, result.stdout
+    assert result.stdout.strip().splitlines()[-1].strip() == str(len(source))
+
+
+def test_crlf_file_keeps_its_line_endings():
+    source = "Title\r\nBody one.\r\nBody two.\r\n"
+    path = _write_j(source)
+    k_source = j_to_k(path)
+    assert _codes(f"(`title`body`text!{k_source.split('!', 1)[1].strip()})[`text]") == " ".join(
+        str(ord(c)) for c in source
+    )
 
 
 if __name__ == "__main__":

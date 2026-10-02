@@ -11,7 +11,8 @@ a real K interpreter.
   blocking markers (`markers.py`), and never resolves them or renames
   the file itself.
 - **`stage2_j_to_k/`** -- `.j` -> `.k`. `transform.py` represents a
-  `.j` file's content as a K dict (`title`/`body`); `validators.py`
+  `.j` file's content as a K dict: `text` (the file, exactly) plus
+  `title`/`body` as a view; `validators.py`
   checks already-produced `.k` source (currently the `ok` -> `oK`
   rule). `fixtures/` holds a synthetic sample file for the round-trip
   test. See that directory's own README.
@@ -24,8 +25,8 @@ a real K interpreter.
 
 `pipeline.py` runs `.i` (or `.j`) files through every stage in order
 and reports how far each got: readiness, compile, validate, evaluate
-in oK, then a round-trip check inside oK that the dict's title and
-body match the source exactly.
+in oK, then a round-trip check that the `.k` holds the source
+exactly, computed separately inside oK and in Python.
 
 ```sh
 python3 pipeline.py path/to/file.i path/to/dir/

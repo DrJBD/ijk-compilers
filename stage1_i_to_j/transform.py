@@ -65,5 +65,6 @@ def promote(i_file_path: str, j_file_path: str) -> ReadinessReport:
         raise ValueError(
             "Refusing to promote -- file is not ready:\n" + report.summary()
         )
-    Path(j_file_path).write_text(report.path.read_text(encoding="utf-8"), encoding="utf-8")
+    # Byte copy: read_text/write_text would rewrite CRLF line endings.
+    Path(j_file_path).write_bytes(report.path.read_bytes())
     return report

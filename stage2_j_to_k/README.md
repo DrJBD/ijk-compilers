@@ -9,7 +9,7 @@ The real open question from when this stage was first discussed --
 what it actually means to "compile" prose into K, versus a
 NOTATION_PROPOSAL.md-style arithmetic expression -- is **not
 answered here**. What this does: represent a `.j` file's content as
-real K *data* (a dict, `title`/`body`), verified valid against the
+real K *data* (a dict: `text`, the file exactly, plus `title`/`body`), verified valid against the
 actual `oK` interpreter (`~/code/ok`). It does not claim the result
 is "executable" in any deeper sense than "a K program that holds this
 document's content and parses cleanly." Extending what compilation
@@ -34,6 +34,25 @@ here.
   all verified against the real interpreter or exercising real edge
   cases (escaped quotes inside strings, word-boundary false positives
   on "book"/"token", already-correct input left alone).
+
+## Lossless, and what that took
+
+`text` holds the source exactly; `title`/`body` are a stripped view.
+Before `text` existed, 19 of 20 real files lost a trailing newline or
+the blank line after the title. Two characters can't safely go inside
+an oK string literal, so `k_string` splices them in by character code
+(`` `c$13 ``, `` `c$92 ``):
+
+- **Carriage return.** oK has no `\r` escape, and a raw CR breaks its
+  line-based parser. Every other control character (0-31) was tried
+  raw and survives.
+- **Backslash.** oK undoes escapes one kind at a time, `\\` first
+  (`oK.js`, the `EC` table), so `\\n` -- correctly "backslash, then n"
+  -- turns into a newline. Found on a real file that writes about
+  `\r\n`. This is a bug in oK, worked around here rather than patched.
+
+Files are read with `newline=""`, so CRLF line endings stay as they
+are.
 
 ## Real edge case the tests caught
 

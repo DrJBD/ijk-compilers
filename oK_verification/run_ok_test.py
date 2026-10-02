@@ -27,14 +27,27 @@ _REPL = Path(
     os.environ.get("OK_REPL", Path.home() / "code" / "ok" / "repl.js")
 ).expanduser()
 
-# K error messages observed directly: "valence error.", "the name 'x'
-# has not been defined.", "type error." (per oK's docs/Manual.md
-# error list) -- matched by the shared "<...> error." shape, plus the
-# specific "has not been defined" phrasing since it doesn't end that
-# way.
+# Every error message oK.js can throw, read from its source (each
+# `throw new Error(...)`) and triggered for real in
+# test_run_ok_test.py. The REPL prints each one on its own output line;
+# a value never starts that way (strings print starting with `"`), so
+# the patterns are anchored to the start of a line. An earlier version
+# matched only "... error." at line end and "has not been defined.",
+# which let parse errors, unexpected characters and "... expected"
+# messages through as passes.
 _ERROR_PATTERNS = [
-    re.compile(r"\berror\.\s*$", re.MULTILINE),
-    re.compile(r"has not been defined\."),
+    re.compile(p, re.MULTILINE)
+    for p in (
+        r"^\s*\w+ error\..*$",  # length/valence/index/domain/parse error.
+        r"^\s*the name '.*' has not been defined\.$",
+        r"^\s*unexpected character .*$",
+        r"^\s*noun expected following ':'\.$",
+        r"^\s*function or list expected, found .*$",
+        r"^\s*\w+ expected, found \w+\.$",
+        r"^\s*positive int expected\.$",
+        r"^\s*malformed byte string\.$",
+        r"^\s*invalid arguments to .*$",
+    )
 ]
 
 

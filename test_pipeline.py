@@ -11,7 +11,7 @@ import pipeline
 
 
 def _write(text: str, suffix: str) -> Path:
-    with tempfile.NamedTemporaryFile("w", suffix=suffix, delete=False, encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile("w", suffix=suffix, delete=False, encoding="utf-8", newline="") as f:
         f.write(text)
         return Path(f.name)
 
@@ -68,6 +68,29 @@ def test_out_dir_gets_j_and_k_and_source_is_untouched():
         assert (Path(out) / f"{src.stem}.j").read_text(encoding="utf-8") == before
         assert (Path(out) / f"{src.stem}.k").exists()
     assert src.exists() and src.read_text(encoding="utf-8") == before
+
+
+def test_crlf_and_emoji_file_round_trips_and_out_copy_is_byte_exact():
+    src = _write("Title \u2014 \U0001F600\r\n\r\nBody\r\n", ".i")
+    raw = src.read_bytes()
+    result = pipeline.run_pipeline(src)
+    assert result.ok, result.summary()
+    with tempfile.TemporaryDirectory() as out:
+        assert pipeline.main([str(src), "--out", out]) == 0
+        assert (Path(out) / f"{src.stem}.j").read_bytes() == raw
+
+
+def test_round_trip_catches_lost_whitespace():
+    # The loss stage 2 used to have: title/body still match, but the
+    # file's trailing newline is gone from `text.
+    path = _write("Title\nBody.\n", ".i")
+    real = pipeline._stage2.j_to_k
+    pipeline._stage2.j_to_k = lambda p: real(p).replace('Body.\\n")', 'Body.")')
+    try:
+        result = pipeline.run_pipeline(path)
+    finally:
+        pipeline._stage2.j_to_k = real
+    assert result.failed_at == "round-trip", result.summary()
 
 
 if __name__ == "__main__":

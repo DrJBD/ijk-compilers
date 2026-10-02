@@ -34,6 +34,19 @@ every check runs real source through the real interpreter.
   `1%0` evaluates to `0w` (infinity), neither errors. Worth knowing
   before assuming something "should" fail.
 
+- **The harness has to know every error message oK can print.** It
+  first matched only "... error." and "has not been defined.", so a
+  parse error, an unexpected character, "noun expected" and "function
+  or list expected" all came back as passes. The patterns now cover
+  every message `oK.js` throws, anchored to the start of a line, with
+  a real trigger for each in `test_run_ok_test.py`.
+- **oK mis-reads `\\` before `n`, `t` or `"`** in a string literal --
+  see `stage2_j_to_k/README.md`.
+- **Non-ASCII displays truncated but is stored whole.** oK prints an em
+  dash as the byte `0x14`, but `0+"—"` is `8212`. Strings are UTF-16
+  code units (an emoji is two). Check content by code, not by printed
+  form.
+
 ## The "ok" -> "oK" normalization rule
 
 Judah's own instruction, 2026-09-14: the ijk compiler should treat

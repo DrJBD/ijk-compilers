@@ -47,6 +47,34 @@ def test_assert_k_ok_passes_silently_on_success():
     assert_k_ok("+/1 2 3")  # no exception
 
 
+def test_every_error_shape_is_detected():
+    """One real trigger per error message oK.js can throw. Before the
+    patterns were anchored to line starts, the first four of these
+    passed the harness silently."""
+    triggers = {
+        "(1;2": "parse error.",
+        "\u00a7": "unexpected character",
+        "a:": "noun expected",
+        "1[2]": "function or list expected",
+        "1 2+1 2 3": "length error.",
+        "{x}[1;2;3]": "valence error.",
+        "undefinedThing": "has not been defined",
+    }
+    for source, expected in triggers.items():
+        result = run_k(source, use_prelude=False)
+        assert not result.ok, f"{source!r} passed: {result.stdout}"
+        assert any(expected in e for e in result.errors), (source, result.errors)
+
+
+def test_string_value_mentioning_an_error_is_not_a_failure():
+    """A string that merely contains error-shaped text is a value, and
+    oK prints it starting with a quote, so it must not trip the
+    patterns."""
+    for source in ['"parse error. x expected."', '"the name \'x\' has not been defined."']:
+        result = run_k(source, use_prelude=False)
+        assert result.ok, (source, result.errors)
+
+
 if __name__ == "__main__":
     import sys
 
