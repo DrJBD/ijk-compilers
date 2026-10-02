@@ -4,7 +4,10 @@ Operations on an ijk feed
 .ijk files are rosetta stones with the same thing said three different ways. This is 
 a definition that can easily be shown to be true or false given a review by a human.
 
--- Claude: now checkable. ijk_files.py check NAME.ijk does the k-to-j half mechanically (oK must hold exactly the j text) and reports the j-to-i half for a person: how many places differ, and with --show, those places as a .ij.
+-- ijk_files.py check NAME.ijk does the k-to-j half mechanically 
+   (oK must hold exactly the j text) 
+   and reports the j-to-i half for a person: How many places differ?
+   Use with --show, those places as a .ij.
 
 -- What exists: feed.py loads any mix of .i, .j, .k and .ijk files into one oK program. It defines docs (each document's own .k dict) and corpus (the same documents as columns: name, title, body, text). The output of a run is also, can also, be 
 reviewed by an AI or the human user.

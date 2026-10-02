@@ -69,3 +69,5 @@ testing it for this project turned up, with where it's recorded.
 | `#'` (count each) misparses into a projection; `{#x}'` works | `candidate_ops.k` |
 | A list of dicts doesn't become a table, and `+` on a dict doesn't flip it into one | `feed.py` uses column lists instead |
 | `` `l$ `` (cast to lowercase) crashes the formatter; `_` lowercases a string | probe, 2026-10-02 |
+| `o` is reserved inside a function (it's the function itself, per the Manual), so an argument named `o` silently becomes the function | probe, 2026-10-02 |
+| Symbols can't contain `_`: `` `dark_bishop `` splits, and `!` then reads as mod | probe, 2026-10-02 |
