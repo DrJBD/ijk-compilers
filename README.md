@@ -20,6 +20,21 @@ a real K interpreter.
   REPL exits 0 even on failure, so it reads the output instead. See
   that directory's own README.
 
+## Running the whole pipeline
+
+`pipeline.py` runs `.i` (or `.j`) files through every stage in order
+and reports how far each got: readiness, compile, validate, evaluate
+in oK, then a round-trip check inside oK that the dict's title and
+body match the source exactly.
+
+```sh
+python3 pipeline.py path/to/file.i path/to/dir/
+python3 pipeline.py path/to/dir/ --out build/   # also write .j and .k
+```
+
+It writes nothing unless given `--out`, and never renames or edits a
+source file.
+
 ## Running the tests
 
 Needs Python 3 and Node. Stage 2 and the harness also need a clone of
@@ -43,6 +58,7 @@ its own directory, starting at the repo root:
 (cd stage1_i_to_j   && python3 test_transform.py)
 (cd stage2_j_to_k   && python3 test_transform.py && python3 test_validators.py)
 (cd oK_verification && python3 test_run_ok_test.py)
+python3 test_pipeline.py
 ```
 
 ## Notes

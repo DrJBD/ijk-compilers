@@ -39,16 +39,13 @@ every check runs real source through the real interpreter.
 Judah's own instruction, 2026-09-14: the ijk compiler should treat
 lowercase "ok" as a valid transform into the properly-cased "oK" --
 i.e., a casual reference to the interpreter by its ordinary-English
-name normalizes to its real one. **Not yet implemented as code** --
-stage 2 (`.j` -> `.k`) doesn't exist yet, and this is stage 2's rule
-to enforce once it does, the same way "(...)" -> "---" is stage 1's
-rule. Recorded here so it isn't lost before stage 2 exists to carry
-it.
+name normalizes to its real one. Implemented in stage 2 as a `.k`
+validator (`stage2_j_to_k/validators.py`), the same way "(...)" ->
+"---" is stage 1's rule.
 
-## What this gives Delta/Doctor J right now
+## Using it directly
 
-A real, working way to verify any `.k` content -- hand-written,
-stage-2 output once it exists, or anything else -- against an actual
-interpreter rather than assuming it's correct K. `assert_k_ok(...)` is
-usable today, independent of whether the rest of the ijk pipeline is
-finished.
+`assert_k_ok(...)` checks any `.k` source against the real
+interpreter -- hand-written, stage 2 output, or anything else -- and
+works on its own, without the rest of the pipeline. `pipeline.py` at
+the repo root uses it for the last two stages of an end-to-end run.
