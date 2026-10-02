@@ -36,6 +36,9 @@ python3 pipeline.py path/to/dir/ --out build/   # also write .j and .k
 It writes nothing unless given `--out`, and never renames or edits a
 source file.
 
+See `samples/README.md` for what `.i`, `.j` and `.k` files are, with
+sample `.k` output that runs on its own in oK.
+
 ## Running the tests
 
 Needs Python 3 and Node. Stage 2 and the harness also need a clone of

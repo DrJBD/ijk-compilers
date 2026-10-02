@@ -93,6 +93,18 @@ def test_round_trip_catches_lost_whitespace():
     assert result.failed_at == "round-trip", result.summary()
 
 
+def test_committed_samples_match_what_the_compiler_produces_now():
+    samples = Path(__file__).parent / "samples"
+    for src in sorted((samples / "src").glob("*.i")):
+        result = pipeline.run_pipeline(src)
+        k_file = samples / f"{src.stem}.k"
+        if not result.ok:
+            assert not k_file.exists(), f"{k_file.name} exists but {src.name} isn't ready"
+            continue
+        assert k_file.read_text(encoding="utf-8") == result.k_source, f"{k_file.name} is stale"
+        assert (samples / f"{src.stem}.j").read_bytes() == src.read_bytes()
+
+
 if __name__ == "__main__":
     tests = [v for k, v in list(globals().items()) if k.startswith("test_")]
     failed = 0
