@@ -62,6 +62,18 @@ The output also pastes into oK's browser REPL. Which operations belong
 on top of the corpus is open; `candidate_ops.k` holds tested
 candidates and `OPERATIONS.i` the open questions.
 
+## Viewing a context
+
+`viewer/build_viewer.py` takes the same arguments as `feed.py` and
+writes one HTML file with oK and the feed inside it. Open it in a
+browser, with no network needed: the documents are listed by name and
+title, clicking one shows its exact text, and a box runs K against the
+loaded context.
+
+```sh
+python3 viewer/build_viewer.py samples/ --prelude candidate_ops.k -o viewer.html
+```
+
 ## Running the tests
 
 Needs Python 3 and Node. Stage 2 and the harness also need a clone of
@@ -88,6 +100,7 @@ its own directory, starting at the repo root:
 python3 test_pipeline.py
 python3 test_ijk_files.py
 python3 test_feed.py
+python3 viewer/test_viewer.py
 ```
 
 ## Notes

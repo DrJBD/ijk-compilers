@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@@TITLE@@</title>
+<style>
+:root {
+  --bg: #fbfaf7; --panel: #ffffff; --ink: #1f1f1d; --muted: #6b6a65;
+  --line: #e4e2dc; --accent: #2f5d8a; --error: #a33a2c; --pick: #eef3f8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --panel: #1e1e1c; --ink: #ecebe6; --muted: #9a9890;
+    --line: #34332f; --accent: #8db6dd; --error: #e08a7c; --pick: #23303c;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --panel: #1e1e1c; --ink: #ecebe6; --muted: #9a9890;
+  --line: #34332f; --accent: #8db6dd; --error: #e08a7c; --pick: #23303c;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); height: 100vh;
+  display: flex; flex-direction: column;
+  font: 15px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; }
+header { padding: 12px 16px; border-bottom: 1px solid var(--line); }
+header h1 { margin: 0; font-size: 17px; font-weight: 600; }
+header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); }
+nav { border-right: 1px solid var(--line); overflow-y: auto; }
+nav button { display: block; width: 100%; text-align: left; padding: 9px 16px; border: 0;
+  border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; cursor: pointer; }
+nav button:hover, nav button[aria-current="true"] { background: var(--pick); }
+nav .name { display: block; font-size: 12px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+section { display: flex; flex-direction: column; min-width: 0; }
+#doc { flex: 1; margin: 0; padding: 16px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  font: 14px/1.55 ui-monospace, Menlo, monospace; background: var(--panel); }
+#repl { border-top: 1px solid var(--line); padding: 12px 16px; }
+#log { max-height: 30vh; overflow: auto; margin: 0 0 8px; white-space: pre-wrap; word-break: break-word;
+  font: 13px/1.45 ui-monospace, Menlo, monospace; }
+#log .in { color: var(--accent); }
+#log .err { color: var(--error); }
+#q { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: inherit; font: 14px ui-monospace, Menlo, monospace; }
+.hint { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+@media (max-width: 640px) {
+  body { height: auto; }
+  main { grid-template-columns: minmax(0, 1fr); }
+  nav { border-right: 0; border-bottom: 1px solid var(--line); max-height: 35vh; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>@@TITLE@@</h1>
+  <p id="summary">Loading…</p>
+</header>
+<main>
+  <nav id="list" aria-label="Documents"></nav>
+  <section>
+    <pre id="doc">Pick a document.</pre>
+    <div id="repl">
+      <div id="log" aria-live="polite"></div>
+      <input id="q" autocomplete="off" spellcheck="false" placeholder="K expression, e.g. corpus`title  —  Enter to run">
+      <p class="hint">docs, corpus and any prelude are loaded. ↑/↓ for history.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+/*
+oK, by John Earnest -- https://github.com/JohnEarnest/ok
+@@OK_LICENSE@@
+*/
+@@OK_JS@@
+</script>
+
+<script id="viewer-core">
+var FEED = @@FEED@@;
+
+// A K string (list of character codes) back to a JS string; anything
+// else in K's printed form.
+function kText(x) {
+  if (x.t == 1) return String.fromCharCode(x.v);
+  if (x.t == 3 && x.v.every(function (c) { return c.t == 1; }))
+    return x.v.map(function (c) { return String.fromCharCode(c.v); }).join("");
+  return format(x);
+}
+function loadFeed(feedText) {
+  var env = baseEnv();
+  run(parse(feedText), env);
+  return env;
+}
+function evaluate(env, src) {
+  try { return { ok: true, out: format(run(parse(src), env)) }; }
+  catch (e) { return { ok: false, out: e.message }; }
+}
+function rows(env) {
+  var names = run(parse("corpus`name"), env).v, titles = run(parse("corpus`title"), env).v;
+  return names.map(function (n, i) { return { name: kText(n), title: kText(titles[i]) }; });
+}
+function docText(env, i) {
+  return kText(run(parse("(docs " + i + ")`text"), env));
+}
+</script>
+
+<script>
+(function () {
+  var env, history = [], at = 0;
+  var list = document.getElementById("list"), doc = document.getElementById("doc");
+  var log = document.getElementById("log"), q = document.getElementById("q");
+  function line(text, cls) {
+    var d = document.createElement("div");
+    if (cls) d.className = cls;
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+  try { env = loadFeed(FEED); }
+  catch (e) { document.getElementById("summary").textContent = "The feed didn't load: " + e.message; return; }
+  var r = rows(env);
+  document.getElementById("summary").textContent = r.length + " document" + (r.length == 1 ? "" : "s") + ", loaded into oK in this page.";
+  r.forEach(function (row, i) {
+    var b = document.createElement("button");
+    b.innerHTML = "<span class='name'></span><span class='title'></span>";
+    b.querySelector(".name").textContent = row.name;
+    b.querySelector(".title").textContent = row.title || "(untitled)";
+    b.onclick = function () {
+      list.querySelectorAll("button").forEach(function (x) { x.removeAttribute("aria-current"); });
+      b.setAttribute("aria-current", "true");
+      doc.textContent = docText(env, i);
+    };
+    list.appendChild(b);
+  });
+  q.addEventListener("keydown", function (e) {
+    if (e.key == "ArrowUp" && at > 0) { q.value = history[--at]; e.preventDefault(); return; }
+    if (e.key == "ArrowDown") { at = Math.min(at + 1, history.length); q.value = history[at] || ""; e.preventDefault(); return; }
+    if (e.key != "Enter" || !q.value.trim()) return;
+    var src = q.value; history.push(src); at = history.length; q.value = "";
+    line("  " + src, "in");
+    var res = evaluate(env, src);
+    line(res.out, res.ok ? "" : "err");
+  });
+})();
+</script>
+</body>
+</html>
