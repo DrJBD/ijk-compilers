@@ -180,9 +180,14 @@ def check_ijk(data: bytes) -> dict:
     if "j" in sections and "k" in sections:
         j_text = sections["j"][1].decode("utf-8")
         k_source = sections["k"][1].decode("utf-8")
-        run = pipeline._ok.run_k_file(f"d:{k_source}t:0+d[`text]\n(#t;+/t;+/(1+!#t)*t)")
-        expected = " ".join(str(n) for n in pipeline._fingerprint(j_text))
-        report["k_matches_j"] = run.ok and run.stdout.split() == expected.split()
+        # All three fields, as the pipeline checks them: text must be the
+        # j exactly, and title/body must be the view of it, so an edit to
+        # the k's body alone can't pass.
+        run = pipeline._ok.run_k_file(
+            f"d:{k_source},/{{(#x;+/x;+/(1+!#x)*x)}}'0+'(d`title;d`body;d`text)")
+        title, body = pipeline._expected_title_body(j_text)
+        expected = [str(n) for field in (title, body, j_text) for n in pipeline._fingerprint(field)]
+        report["k_matches_j"] = run.ok and run.stdout.split() == expected
     if "i" in sections and "j" in sections:
         i_text = sections["i"][1].decode("utf-8")
         j_text = sections["j"][1].decode("utf-8")

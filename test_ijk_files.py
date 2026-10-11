@@ -133,6 +133,10 @@ def test_rosetta_check_catches_a_k_that_says_something_else():
     assert ijk_files.check_ijk(pack_ijk(files))["k_matches_j"] is False
     files["k"] = (name, k.replace(b'block either.\\n")', b'block either.")'))  # lost final newline
     assert ijk_files.check_ijk(pack_ijk(files))["k_matches_j"] is False
+    # body edited, text left alone: the view no longer matches the j
+    files["k"] = (name, k.replace(b"nothing to ask", b"nothing to say", 1))
+    assert files["k"][1].count(b"nothing to ask") == 1
+    assert ijk_files.check_ijk(pack_ijk(files))["k_matches_j"] is False
 
 
 def test_rosetta_check_says_when_it_cant_tell():
