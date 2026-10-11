@@ -18,11 +18,13 @@ open questions. A **`.j`** holds the author's confirmed words. A **`.k`**
 is the `.j` as data for the [K language](https://github.com/JohnEarnest/ok),
 so a program can work with it without changing it.
 
-There are two examples, both run from the repo root. The first,
+There are three examples, all run from the repo root. The first,
 three documents for a neighbourhood garden club (`examples/club/`), goes
 through every tool once. The second, a recipe passed back and forth
 between a cook and an AI (`examples/recipe/`), follows one document
-through several rounds of review.
+through several rounds of review. The third, a shop's returns policy
+(`examples/shop/`), is the business case: a draft that needs legal
+sign-off, and published copies that must match what was signed.
 
 Every command's output on this page is real: `test_examples.py` runs each
 one and fails if the page and the tools disagree. Files the examples
@@ -381,6 +383,134 @@ shakshuka.j: identical to the approved draft
 
 **Who it helps:** anyone who has to show, later, exactly what a document
 said at each stage, such as a recipe for a cookbook, a policy, or a contract.
+
+## A returns policy: signed off, and provably unchanged
+
+Example Shop (made up) is updating its returns policy. A manager drafts
+it with an AI. Legal has to answer one question and sign the final text.
+Then the policy goes to the website, the checkout page and the receipt
+printer, and every copy has to say exactly what legal signed.
+
+If you use git, this will look familiar, and ijk is meant to sit beside
+it: `.i` and `.j` files are plain text and live in a repo like anything
+else. git records what changed and who committed it. ijk records two
+things git doesn't: whether each part is settled, and proof that a
+published copy matches the signed text.
+
+### 12. Nothing ships with an open question
+
+The draft has a question for legal, marked `---`:
+
+```console
+$ cat examples/shop/returns-draft.i
+Returns Policy
+You can return most items to Example Shop for a full refund.
+-- Returns are accepted within 30 days of delivery.
+-- Bring the item and your receipt to any store, or send it back by post.
+--- Legal: do sale items get the same return window?
+Refunds go back to the original payment method within 5 working days.
+```
+
+The manager writes legal's answer into `returns.i`. Legal then edits and
+signs the final text as `returns.j`. The folder holds every stage, and
+the pipeline shows which ones could ship:
+
+```console
+$ python3 pipeline.py examples/shop/
+PASS  receipt-footer.j
+FAIL  returns-draft.i -- stopped at readiness
+      returns-draft.i: NOT ready -- 1 blocking marker(s):
+        line 5: [---] --- Legal: do sale items get the same return window?
+PASS  returns.i
+PASS  returns.j
+
+3/4 through to oK
+```
+
+In a build or release script, the pipeline's exit code is the gate: it
+is `0` only when every file passes.
+
+### 13. What legal changed
+
+```console
+$ python3 ijk_files.py merge examples/shop/returns.i examples/shop/returns.j -o build/returns.ij
+wrote build/returns.ij
+$ cat build/returns.ij
+Returns Policy
+You can return most items to Example Shop for a full refund.
+<<<<<<< .i
+-- Returns are accepted within 30 days of delivery.
+-- Bring the item and your receipt to any store, or send it back by post.
+-- Sale items can be exchanged within the same window, but not refunded.
+=======
+Returns are accepted within 14 days of delivery, as printed on every receipt.
+Bring the item and your receipt to any store, or send it back by post.
+Sale items can be exchanged within the same window, but not refunded.
+>>>>>>> .j
+Refunds go back to the original payment method within 5 working days.
+```
+
+Legal took off the draft markers, and made one real decision: the draft
+said 30 days, but every receipt already printed says 14, so the signed
+policy says 14. The block uses git's own conflict markers, so it reads
+like a merge conflict, but nothing is in conflict: it is the record of
+the sign-off.
+
+### 14. The website says what was signed
+
+Compile the signed texts into the data the website and the checkout page
+will load, and pack the policy with its draft and its data:
+
+```console
+$ python3 pipeline.py examples/shop/receipt-footer.j examples/shop/returns.j --out build/published/
+PASS  receipt-footer.j
+PASS  returns.j
+
+2/2 through to oK
+$ python3 ijk_files.py pack examples/shop/returns.i examples/shop/returns.j build/published/returns.k -o build/returns.ijk
+wrote build/returns.ijk
+$ python3 ijk_files.py check build/returns.ijk
+k says what j says: yes, exactly
+j against i: 1 place(s) differ -- a person decides if they say the same thing
+```
+
+Now suppose the website's copy goes back to the draft's 30 days: an old
+file reused, a bad copy-paste, a well-meant "fix". The check catches it,
+and exits non-zero so a script can stop the release:
+
+```console
+$ sed '/^`title/s/14 days/30 days/' build/returns.ijk > build/returns-website.ijk
+$ python3 ijk_files.py check build/returns-website.ijk || echo "release stopped"
+k says what j says: NO
+j against i: 1 place(s) differ -- a person decides if they say the same thing
+release stopped
+```
+
+### 15. When the policy changes, find every copy that states it
+
+Next year the window changes. Before anyone edits anything, find every
+signed text that states the current one:
+
+```console
+$ python3 feed.py build/published/ --prelude candidate_ops.k -e 'find["14 days"]'
+("receipt-footer"
+ "returns")
+```
+
+Both need a new round of sign-off. The search is exact, capital letters
+included:
+
+```console
+$ python3 feed.py build/published/ --prelude candidate_ops.k -e 'find["Sale items"]'
+("receipt-footer"
+ "returns")
+$ python3 feed.py build/published/ --prelude candidate_ops.k -e 'find["sale items"]'
+()
+```
+
+**Who it helps:** legal and compliance teams signing customer-facing
+text, the people who publish it, and the auditor who later asks "show
+me that what customers saw is what you approved."
 
 ## Try it on your own writing
 
