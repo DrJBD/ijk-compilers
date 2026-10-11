@@ -7,8 +7,9 @@
 / atom, so lines enlists too. And take wraps around: 3#"-" is "---", so
 / a prefix test checks the length first.
 
-/ lines of a text; prefix test; substring test (oK has no ss)
-lines:{"\n"\(),x}
+/ lines of a text (a final newline ends the last line, it doesn't start
+/ a new one); prefix test; substring test (oK has no ss)
+lines:{l:"\n"\(),x; $[(#l)&0=#*|l; -1_l; l]}
 starts:{y:(),y; $[(#y)>#x;0;y~(#y)#x]}
 has:{[s;p] p:(),p; i:&s=*p; i:i@&i<1+(#s)-#p; 0<+/p~/:(#p)#'i_\:s}
 

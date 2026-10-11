@@ -99,7 +99,8 @@ def test_candidate_ops_match_python():
     files = feed.collect([str(_corpus(EDGE))])
     texts = [f.read_text(encoding="utf-8", newline="") for f in files]
     text = feed.build_feed(files) + OPS
-    lines = [t.split("\n") for t in texts]
+    # a final newline ends the last line rather than starting an empty one
+    lines = [l[:-1] if l and l[-1] == "" else l for l in (t.split("\n") for t in texts)]
 
     assert _run(text, "nlines").split() == [str(len(l)) for l in lines]
     for m in ["-", "--", "---", "- ", "-- ", "-? ", "?"]:
