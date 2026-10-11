@@ -59,7 +59,7 @@ testing it for this project turned up, with where it's recorded.
 
 | Finding | Where |
 |---|---|
-| Escapes are undone one kind at a time, so `"\\n"` (backslash, then n) becomes a newline | `stage2_j_to_k/README.md`, Delta Design-70 |
+| Escapes are undone one kind at a time, so `"\\n"` (backslash, then n) becomes a newline | `stage2_j_to_k/README.md` |
 | A raw carriage return in a string breaks the line-based parser | `stage2_j_to_k/README.md` |
 | The REPL exits 0 on errors and prints them as ordinary output; file mode crashes Node with a stack trace instead | `run_ok_test.py` |
 | Non-ASCII prints as truncated hex bytes but is stored whole, as UTF-16 code units (an emoji is two) | `README.md` here |

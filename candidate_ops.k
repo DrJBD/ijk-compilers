@@ -1,4 +1,4 @@
-/ Candidate operations on an ijk feed -- not settled; see OPERATIONS.i.
+/ Candidate operations on an ijk feed -- not settled; see OPERATIONS.md.
 / Load after a feed: python3 feed.py DIR --prelude candidate_ops.k
 / Each one is checked against Python in test_feed.py.
 / --

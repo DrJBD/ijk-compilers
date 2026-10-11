@@ -75,7 +75,7 @@ def test_directory_prefers_k_then_ijk_then_j_then_i():
 
 
 def test_the_i_side_never_goes_in():
-    # Judah, OPERATIONS.i: identities must be preserved; minimize leaks.
+    # Judah, OPERATIONS.md: identities must be preserved; minimize leaks.
     d = Path(tempfile.mkdtemp())
     (d / "a.i").write_text("A\nonly a draft\n", encoding="utf-8")
     (d / "b.i").write_text("B\ndraft\n", encoding="utf-8")

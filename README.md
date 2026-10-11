@@ -60,7 +60,7 @@ python3 feed.py samples/ --prelude candidate_ops.k -e 'find["oK"]'
 
 The output also pastes into oK's browser REPL. Which operations belong
 on top of the corpus is open; `candidate_ops.k` holds tested
-candidates and `OPERATIONS.i` the open questions.
+candidates and `OPERATIONS.md` the open questions.
 
 ## Viewing a context
 

@@ -12,7 +12,7 @@ What the program defines:
 
 so `corpus`title lists every title and `{#x}'corpus`text gives every
 length. Nothing else is defined. Which operations belong on top of
-this is still open; see OPERATIONS.i.
+this is still open; see OPERATIONS.md.
 
 Where each document's dict comes from:
 
@@ -21,7 +21,7 @@ Where each document's dict comes from:
     .j     compiled through the pipeline, which must pass every stage
 
 The .i side never goes in: not a .i file, not a .ijk's i section, not
-a .ij (which holds the .i text). Judah, OPERATIONS.i: "The corpus
+a .ij (which holds the .i text). Judah, OPERATIONS.md: "The corpus
 should not carry the .i side ... as identities must be preserved.
 Unfortunately there are leaks from triangulation which is a known risk
 and must be minimized." A directory's .i files are skipped and named
