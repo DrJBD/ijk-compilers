@@ -1,8 +1,11 @@
 # ijk-compilers
 Validated interpreters of the ijk language created by Judah De Paula.
 
+An AI can draft anything; only a person can confirm it, and the tools
+enforce the difference.
+
 New here? [`EXAMPLES.md`](EXAMPLES.md) walks through what ijk is for,
-step by step, on a small example you can run.
+step by step, on three small examples you can run.
 
 ## The pipeline
 
