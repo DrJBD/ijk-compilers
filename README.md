@@ -1,6 +1,9 @@
 # ijk-compilers
 Validated interpreters of the ijk language created by Judah De Paula.
 
+New here? [`EXAMPLES.md`](EXAMPLES.md) walks through what ijk is for,
+step by step, on a small example you can run.
+
 ## The pipeline
 
 Files move `.i` -> `.j` -> `.k`, and the `.k` output is checked against
@@ -101,6 +104,7 @@ python3 test_pipeline.py
 python3 test_ijk_files.py
 python3 test_feed.py
 python3 viewer/test_viewer.py
+python3 test_examples.py     # every command in EXAMPLES.md
 ```
 
 ## Notes
