@@ -88,16 +88,22 @@ hands. A list of open questions can't quietly go out to the printer.
 
 ### 2. Confirm, then compile
 
-Once a `.i` is ready, the author promotes it to a `.j`. The tools never
-do that for you; promoting is the author's decision. For `welcome`, the
-author rewrote part of the AI's draft and saved the result as
-`welcome.j`. For `watering`, the author accepted the draft as it was.
-
-`--out` writes the `.j` and the compiled `.k` for each file that passes:
+Once a `.i` is ready, the author promotes it to a `.j`. The decision is
+the author's; the act is just saving the file under its new name. For
+`welcome`, the author rewrote part of the AI's draft and saved the result
+as `welcome.j`. For `watering`, the author accepted the draft as it was,
+so its `.j` is an exact copy:
 
 ```console
-$ python3 pipeline.py examples/club/watering.i examples/club/welcome.j --out build/corpus/
-PASS  watering.i
+$ mkdir -p build/corpus && cp examples/club/watering.i build/corpus/watering.j
+```
+
+`--out` writes each file that passes, and its compiled `.k`, into a
+folder:
+
+```console
+$ python3 pipeline.py build/corpus/watering.j examples/club/welcome.j --out build/corpus/
+PASS  watering.j
 PASS  welcome.j
 
 2/2 through to oK
@@ -307,11 +313,13 @@ a question can quietly get lost between drafts.
 
 ### 9. Every character arrives
 
-The cook accepts the last round as it stands:
+The cook accepts the last round as it stands, so the `.j` is a copy of
+it:
 
 ```console
-$ python3 pipeline.py examples/recipe/shakshuka.i --out build/kitchen/
-PASS  shakshuka.i
+$ mkdir -p build/kitchen && cp examples/recipe/shakshuka.i build/kitchen/shakshuka.j
+$ python3 pipeline.py build/kitchen/shakshuka.j --out build/kitchen/
+PASS  shakshuka.j
 
 1/1 through to oK
 ```

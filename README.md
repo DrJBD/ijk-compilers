@@ -92,7 +92,7 @@ exactly, computed separately inside oK and in Python.
 
 ```sh
 python3 pipeline.py path/to/file.i path/to/dir/
-python3 pipeline.py path/to/dir/ --out build/   # also write .j and .k
+python3 pipeline.py path/to/dir/ --out build/   # also write the output
 ```
 
 It writes nothing unless given `--out`, and never renames or edits a
@@ -152,19 +152,16 @@ else, point `OK_REPL` at its `repl.js`:
 export OK_REPL=/path/to/ok/repl.js
 ```
 
-Each test file runs on its own with no test framework. Run each from
-its own directory, starting at the repo root:
+Then, from the repo root:
 
 ```sh
-(cd stage1_i_to_j   && python3 test_transform.py)
-(cd stage2_j_to_k   && python3 test_transform.py && python3 test_validators.py)
-(cd oK_verification && python3 test_run_ok_test.py)
-python3 test_pipeline.py
-python3 test_ijk_files.py
-python3 test_feed.py
-python3 viewer/test_viewer.py
-python3 test_examples.py     # every command in EXAMPLES.md
+python3 run_tests.py
 ```
+
+It runs every test file and prints one line each, and the full output of
+any file that fails. `test_examples.py` among them runs every command in
+`EXAMPLES.md` and checks its output. There's no test framework: each
+file also runs on its own, from its own directory.
 
 ## Notes
 
