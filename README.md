@@ -4,6 +4,62 @@ Validated interpreters of the ijk language created by Judah De Paula.
 An AI can draft anything; only a person can confirm it, and the tools
 enforce the difference.
 
+## How you'd use it
+
+If you've used tracked changes in a word processor, you already know the
+pattern. There's the document with everyone's suggestions still in it,
+the clean copy once you've accepted the ones you want, and the PDF you
+actually send. ijk gives each of those its own file, as plain text:
+
+| File | Like | Who writes it |
+|---|---|---|
+| `.i` | the document with suggestions on | anyone: you, a colleague, an AI |
+| `.j` | the clean copy you accepted | only you |
+| `.k` | the PDF you send | the compiler, from the `.j`, checked |
+
+The difference from tracked changes is that tools check the rules, so
+they don't depend on habit alone. The pipeline won't pass a `.i` that
+still has an open question. Nothing from a `.i` goes into a feed for
+another program or AI. And the `.k` can be checked at any time against
+the `.j` it came from.
+
+**A working session looks like this:**
+
+1. Start a `.i`. The first line is the title. Write what you have.
+2. Bring in the AI to work in the same file. Its lines go in as drafts
+   (`--`) or questions (`-?`). Yours can too.
+3. Read it through. Mark the lines you accept with `-`. That marker means
+   approved, so only you should write it. Rewrite or delete the rest.
+   Anything that needs a real decision before you go on gets `---`.
+4. Run `python3 pipeline.py yourfile.i`. It lists anything still open.
+   Repeat 2–4 until it passes.
+5. Save the passing file as `yourfile.j`. That's your confirmed text.
+   From here on, only you edit it.
+6. When a website, a script or another AI needs the text, compile the
+   `.j` to a `.k`. `ijk_files.py check` proves later that it still says
+   what you confirmed.
+
+One short file, start to finish:
+
+```
+dinner.i (in progress)                      dinner.j (confirmed)
+-----------------------------------------   ------------------------------
+Dinner Friday                               Dinner Friday
+- Friday at 7, at our place.                Friday at 7, at our place.
+-- Bring a dessert if you like.             Bring a dessert if you like.
+--- Is the Smiths' allergy nuts or dairy?   Nothing with nuts, please.
+```
+
+The AI drafted the dessert line (`--`) and you kept it. The `---` line
+stops the `.i` from passing until someone finds out. Once you've written
+the answer in, it passes, and you save it as the `.j`. The `.j` is your
+clean copy, so the markers can go.
+
+**When it's worth it:** anything an AI helped write that goes out under
+your name; anything someone has to sign off; anything where you may later
+need to show exactly what was approved, and that it reached its readers
+unchanged. For a quick note to a friend, it isn't.
+
 New here? [`EXAMPLES.md`](EXAMPLES.md) walks through what ijk is for,
 step by step, on three small examples you can run.
 
