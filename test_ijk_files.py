@@ -107,8 +107,9 @@ def test_cli_round_trip_through_files():
         (d / "x.k").write_bytes(b'`title`body`text!("Title";"Closed.";"...")\n')
         assert ijk_files.main(["merge", str(d / "x.i"), str(d / "x.j")]) == 0
         assert ijk_files.main(["pack", str(d / "x.i"), str(d / "x.j"), str(d / "x.k")]) == 0
-        out = d / "out"
-        out.mkdir()
+        out = d / "out" / "new"  # folders that don't exist yet get made
+        assert ijk_files.main(["merge", str(d / "x.i"), str(d / "x.j"), "-o", str(out / "m" / "x.ij")]) == 0
+        assert ijk_files.main(["pack", str(d / "x.i"), str(d / "x.j"), str(d / "x.k"), "-o", str(out / "p" / "x.ijk")]) == 0
         ijk_files.main(["split", str(d / "x.ij"), "-d", str(out)])
         assert (out / "x.i").read_bytes() == (d / "x.i").read_bytes()
         assert (out / "x.j").read_bytes() == (d / "x.j").read_bytes()

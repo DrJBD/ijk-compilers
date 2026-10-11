@@ -215,11 +215,13 @@ def main(argv=None) -> int:
 
     if args.cmd == "merge":
         out = Path(args.o or Path(args.i).with_suffix(".ij"))
+        out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(merge_ij(_read(args.i), _read(args.j)), encoding="utf-8", newline="")
         print(f"wrote {out}")
     elif args.cmd == "split":
         src = Path(args.ij)
         i_text, j_text = split_ij(_read(src))
+        Path(args.d).mkdir(parents=True, exist_ok=True)
         for suffix, text in ((".i", i_text), (".j", j_text)):
             dest = Path(args.d) / (src.stem + suffix)
             dest.write_text(text, encoding="utf-8", newline="")
@@ -232,9 +234,11 @@ def main(argv=None) -> int:
                 parser.error(f"{f.name}: pack takes one each of .i, .j, .k")
             files[kind] = (f.name, f.read_bytes())
         out = Path(args.o or Path(args.files[0]).with_suffix(".ijk"))
+        out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(pack_ijk(files))
         print(f"wrote {out}")
     elif args.cmd == "unpack":
+        Path(args.d).mkdir(parents=True, exist_ok=True)
         for kind, (name, data) in unpack_ijk(Path(args.ijk).read_bytes()).items():
             dest = Path(args.d) / Path(name).name
             dest.write_bytes(data)
