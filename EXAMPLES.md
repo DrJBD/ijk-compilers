@@ -18,14 +18,20 @@ open questions. A **`.j`** holds the author's confirmed words. A **`.k`**
 is the `.j` as data for the [K language](https://github.com/JohnEarnest/ok),
 so a program can work with it without changing it.
 
-Everything below runs from the repo root on a small example: three
-documents for a neighbourhood garden club, in `examples/club/`. Every
-command's output on this page is real: `test_examples.py` runs each one
-and fails if the page and the tools disagree. Files the examples write go
-in `build/`, which git ignores. You need Python 3, Node and a clone of oK
-(see `README.md`).
+There are two examples, both run from the repo root. The first,
+three documents for a neighbourhood garden club (`examples/club/`), goes
+through every tool once. The second, a recipe passed back and forth
+between a cook and an AI (`examples/recipe/`), follows one document
+through several rounds of review.
 
-## 1. Is it ready to send?
+Every command's output on this page is real: `test_examples.py` runs each
+one and fails if the page and the tools disagree. Files the examples
+write go in `build/`, which git ignores. You need Python 3, Node and a
+clone of oK (see `README.md`).
+
+## The garden club
+
+### 1. Is it ready to send?
 
 The club's three drafts, written partly by an AI:
 
@@ -78,7 +84,7 @@ The rain barrels are for everyone.
 **Who it helps:** anyone sending out text that went through several
 hands. A list of open questions can't quietly go out to the printer.
 
-## 2. Confirm, then compile
+### 2. Confirm, then compile
 
 Once a `.i` is ready, the author promotes it to a `.j`. The tools never
 do that for you; promoting is the author's decision. For `welcome`, the
@@ -107,7 +113,7 @@ $ cat build/corpus/watering.k
 real K interpreter and checked, character by character, that it holds
 the source.
 
-## 3. What did the author decide?
+### 3. What did the author decide?
 
 A `.ij` merges the draft and the final text. Lines they share appear once;
 where they differ, both versions appear side by side, in the same format
@@ -137,7 +143,7 @@ original files, byte for byte.
 **Who it helps:** an editor reviewing AI-assisted work, or anyone who
 later needs to know which words were the author's call.
 
-## 4. Is it still what was approved?
+### 4. Is it still what was approved?
 
 A `.ijk` keeps all three versions in one file: the draft, the confirmed
 text, and the data. `check` tests that they agree:
@@ -168,7 +174,7 @@ j against i: 1 place(s) differ -- a person decides if they say the same thing
 **Who it helps:** anyone handing text to another program, another
 person or an AI and needing proof it arrived unchanged.
 
-## 5. Ask questions of the whole collection
+### 5. Ask questions of the whole collection
 
 `feed.py` loads every confirmed document into one K program, where
 `docs` holds each document and `corpus` holds them all as columns.
@@ -189,7 +195,7 @@ document, the lines starting with a marker: `watering` still carries one
 `-?` question, `welcome` none. These operations are a starting point, not
 a settled set; `OPERATIONS.md` says why.
 
-## 6. Drafts stay out
+### 6. Drafts stay out
 
 A corpus holds confirmed words only. Drafts can contain things an author
 never agreed to, so `feed.py` refuses a `.i` outright:
@@ -216,7 +222,7 @@ not into this folder. The feed doesn't guess that a draft was approved.
 **Who it helps:** anyone giving a collection of documents to an AI or a
 search tool, who wants only the approved versions to go in.
 
-## 7. Look at it in a browser
+### 7. Look at it in a browser
 
 The viewer puts K and the collection into one HTML file that works
 offline: a list of documents, the exact text of each, and a box for K
@@ -228,6 +234,153 @@ wrote build/club.html (2 document(s))
 ```
 
 Open `build/club.html` and try `find["plot"]` in the query box.
+
+## A recipe, back and forth
+
+A cook writes up a recipe with an AI's help. It takes three rounds, kept
+in `examples/recipe/` as `round-1.i`, `round-2.i` and `shakshuka.i`.
+
+### 8. A question can pass without being answered
+
+The AI's first draft. Its question about the oven is a `-?`, which
+doesn't block, so this round passes:
+
+```console
+$ cat examples/recipe/round-1.i
+Shakshuka for Four
+Warm 2 tbsp olive oil in a wide pan. Add 1 onion and 1 jalapeño, diced.
+-- Stir in 2 tsp cumin, 1 tsp paprika and ½ tsp chili flakes, then 800 g crushed tomatoes.
+-- Simmer 10 minutes, make four hollows and crack an egg into each.
+-? Lid on the pan, or into a 200 °C oven?
+Serve with crème fraîche and bread. 🍳
+```
+
+The cook approves the two draft lines (`--` becomes `-`) but never
+answers the question. On its next pass, the AI notices and turns the
+`-?` into a bare `?`: "I asked, and I can't tell that it was answered."
+A bare `?` blocks:
+
+```console
+$ diff examples/recipe/round-1.i examples/recipe/round-2.i
+3,5c3,5
+< -- Stir in 2 tsp cumin, 1 tsp paprika and ½ tsp chili flakes, then 800 g crushed tomatoes.
+< -- Simmer 10 minutes, make four hollows and crack an egg into each.
+< -? Lid on the pan, or into a 200 °C oven?
+---
+> - Stir in 2 tsp cumin, 1 tsp paprika and ½ tsp chili flakes, then 800 g crushed tomatoes.
+> - Simmer 10 minutes, make four hollows and crack an egg into each.
+> ? Lid on the pan, or into a 200 °C oven? The cook approved the lines around this but didn't answer it.
+```
+
+The cook answers it in the text, and the question goes:
+
+```console
+$ diff examples/recipe/round-2.i examples/recipe/shakshuka.i
+5c5
+< ? Lid on the pan, or into a 200 °C oven? The cook approved the lines around this but didn't answer it.
+---
+> Lid on, low heat, 6 to 8 minutes, until the whites set. No oven needed.
+```
+
+All three rounds through the pipeline:
+
+```console
+$ python3 pipeline.py examples/recipe/
+PASS  round-1.i
+FAIL  round-2.i -- stopped at readiness
+      round-2.i: NOT ready -- 1 blocking marker(s):
+        line 5: [?] ? Lid on the pan, or into a 200 °C oven? The cook approved the lines around this but didn't answer it.
+PASS  shakshuka.i
+
+2/3 through to oK
+```
+
+Round 1 passes because a `-?` doesn't block: no tool can tell whether a
+question was answered somewhere in the text. A reviewer can. The bare `?`
+is how the reviewer, human or AI, says "not yet", and from then on the
+file can't be promoted until someone answers.
+
+**Who it helps:** anyone reviewing with an AI over several rounds, where
+a question can quietly get lost between drafts.
+
+### 9. Every character arrives
+
+The cook accepts the last round as it stands:
+
+```console
+$ python3 pipeline.py examples/recipe/shakshuka.i --out build/kitchen/
+PASS  shakshuka.i
+
+1/1 through to oK
+```
+
+The recipe has accents (jalapeño, crème fraîche), a fraction (½), a
+degree sign and an emoji. The PASS above already means the `.k` holds
+every one of them exactly, checked character by character in K. Searches
+work on them too:
+
+```console
+$ python3 feed.py build/kitchen/ --prelude candidate_ops.k -e 'find["crème fraîche"]'
+,"shakshuka"
+```
+
+K counts text in UTF-16 units, as JavaScript does, so its length differs
+from Python's by one: the egg emoji is two units in K and one character
+in Python. Nothing is lost; the two just count differently:
+
+```console
+$ python3 feed.py build/kitchen/ --prelude candidate_ops.k -e '#byname[`shakshuka;`text]'
+359
+$ python3 -c 'print(len(open("examples/recipe/shakshuka.i", encoding="utf-8").read()))'
+358
+```
+
+**Who it helps:** anyone whose writing isn't plain English: names,
+other languages, symbols, emoji.
+
+### 10. The whole journey in one file
+
+Pack the AI's first draft with the cook's final text and its data, and
+the `.ijk` keeps where the recipe started and where it ended:
+
+```console
+$ python3 ijk_files.py pack examples/recipe/round-1.i build/kitchen/shakshuka.j build/kitchen/shakshuka.k -o build/shakshuka.ijk
+wrote build/shakshuka.ijk
+$ python3 ijk_files.py check --show build/shakshuka.ijk
+k says what j says: yes, exactly
+j against i: 1 place(s) differ -- a person decides if they say the same thing
+Shakshuka for Four
+Warm 2 tbsp olive oil in a wide pan. Add 1 onion and 1 jalapeño, diced.
+<<<<<<< .i
+-- Stir in 2 tsp cumin, 1 tsp paprika and ½ tsp chili flakes, then 800 g crushed tomatoes.
+-- Simmer 10 minutes, make four hollows and crack an egg into each.
+-? Lid on the pan, or into a 200 °C oven?
+=======
+- Stir in 2 tsp cumin, 1 tsp paprika and ½ tsp chili flakes, then 800 g crushed tomatoes.
+- Simmer 10 minutes, make four hollows and crack an egg into each.
+Lid on, low heat, 6 to 8 minutes, until the whites set. No oven needed.
+>>>>>>> .j
+Serve with crème fraîche and bread. 🍳
+```
+
+### 11. Getting the originals back
+
+The `.ijk` isn't a summary. Unpacking it gives back each file byte for
+byte:
+
+```console
+$ python3 ijk_files.py unpack build/shakshuka.ijk -d build/back/
+wrote build/back/round-1.i
+wrote build/back/shakshuka.j
+wrote build/back/shakshuka.k
+$ cmp build/back/round-1.i examples/recipe/round-1.i && echo "round-1.i: identical"
+round-1.i: identical
+$ cmp build/back/shakshuka.j examples/recipe/shakshuka.i && echo "shakshuka.j: identical to the approved draft"
+shakshuka.j: identical to the approved draft
+```
+
+**Who it helps:** anyone who has to show, later, exactly what a document
+said at each stage, such as a recipe for a cookbook, a policy, or a contract.
 
 ## Try it on your own writing
 
